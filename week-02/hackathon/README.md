@@ -4,11 +4,12 @@
 
 ## Getting Started:
 ```
-#install requirements
-python -m pip install -r requirements.txt
-
+#create venv
+python -m venv .venv
 #activate venv
 source .venv/bin/activate
+#install requirements
+python -m pip install -r requirements.txt
 ```
 
 ## Badr:

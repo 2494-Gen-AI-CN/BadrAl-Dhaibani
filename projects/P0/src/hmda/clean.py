@@ -72,6 +72,9 @@ def bad_loan_amount(df):
 
 ROW_RULES = [missing_key, bad_lei, tract_county_mismatch, bad_loan_amount]
 
+# Every reason a row can be rejected with; the load log has one count column per reason
+REJECT_REASONS = [r.__name__ for r in ROW_RULES] + ["duplicate", "duplicate_filer"]
+
 
 def duplicate(df, seen):
     """Rows identical in every raw column to one already seen in this file.

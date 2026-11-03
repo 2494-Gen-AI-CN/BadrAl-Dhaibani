@@ -36,3 +36,16 @@ python3 scripts/row_counts.py
 ```
 
 Every `match` column should read `yes`.
+
+## Loading into BigQuery
+
+Copy `.env.example` to `.env`, set `GCP_PROJECT`, and log in with `gcloud auth application-default login`. The free BigQuery sandbox is enough; no billing account is needed.
+
+```bash
+cd projects/P0
+PYTHONPATH=src python -m hmda.run            # load new or changed files, skip the rest
+PYTHONPATH=src python -m hmda.run --force    # reload every file
+python -m pytest                             # tests; none touch BigQuery
+```
+
+Each source file loads into its own table in `hmda_staging` (for example `stg_lar__lar_oh_2024`), replaced whole when the file changes. The views `stg_lar`, `stg_filers`, `stg_counties` and `rejects` stack those tables, so queries read one table each. Every run appends one row per file to `load_log`, with rows read, filtered, rejected (by reason) and loaded, and a status of `loaded`, `skipped` or `failed`. A file whose SHA-256 matches its last successful load is skipped.

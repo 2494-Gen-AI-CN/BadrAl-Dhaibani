@@ -5,6 +5,10 @@
 
 The Chief Lending Officer needs three things before choosing a state: where buyers are applying, who Lakeshore would be competing against, and what it would take to win business. The Fair Lending Officer adds a fourth condition. Lakeshore must not walk into a market where approval gaps between neighbourhoods would expose it to regulatory risk.
 
+**What that means.** US fair lending law (the Fair Housing Act, the Equal Credit Opportunity Act and the Community Reinvestment Act) bars lenders from treating neighbourhoods differently because of who lives there. Regulators check for this with the same HMDA data used here: they compare a bank's approval rates and application volumes in lower-income and majority-minority census tracts against richer ones, and against what other lenders in the same area achieve. A large unexplained gap can lead to a redlining investigation, fines, and a poor CRA rating that blocks future mergers and branch openings. 
+
+So the county shortlist must weigh fair lending exposure alongside demand and pricing. A county with strong demand but a severe neighbourhood approval gap is not automatically ruled out, but it carries a compliance cost that Question 5 is meant to measure.
+
 The answer comes from three years of public federal mortgage data (HMDA, 2023 to 2025), covering every home-purchase application made in both states.
 
 **The five questions**

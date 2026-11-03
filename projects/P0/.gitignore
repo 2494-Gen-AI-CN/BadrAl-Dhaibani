@@ -1,1 +1,4 @@
 data/raw/
+.env
+*-key.json
+credentials*.json

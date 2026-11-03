@@ -19,6 +19,23 @@ The answer comes from three years of public federal mortgage data (HMDA, 2023 to
 
 **The deliverable** is a recommendation: which state to enter, the five counties to start in, and the loan products to lead with.
 
+## Non-sensitive by design
+
+The public HMDA files are already modified to protect privacy (for example, loan amounts are rounded to $10,000 bands). This project goes further: it leaves out every column that describes the applicant's demographics, so no finding or recommendation rests on who an applicant is. Race, ethnicity, sex and age are all protected under US fair lending law, and the client's questions do not need them.
+
+Columns dropped deliberately:
+
+| Group | Raw columns |
+| --- | --- |
+| Race | `derived_race`, `applicant_race-1` to `-5`, `co-applicant_race-1` to `-5`, `applicant_race_observed`, `co-applicant_race_observed` |
+| Ethnicity | `derived_ethnicity`, `applicant_ethnicity-1` to `-5`, `co-applicant_ethnicity-1` to `-5`, `applicant_ethnicity_observed`, `co-applicant_ethnicity_observed` |
+| Sex | `derived_sex`, `applicant_sex`, `co-applicant_sex`, `applicant_sex_observed`, `co-applicant_sex_observed` |
+| Age | `applicant_age`, `co-applicant_age`, `applicant_age_above_62`, `co-applicant_age_above_62` |
+
+None of these columns are listed in `lar_columns` in `config.yaml`, so they never reach BigQuery, staging or the rejects table. The duplicate check briefly reads whole raw rows in memory, so two applications that differ only in these columns are not mistaken for duplicates, but nothing from those columns is stored.
+
+What remains describes the neighbourhood, not the person: `tract_to_msa_income_percentage`, `tract_minority_population_percent` and `tract_population` are census-tract figures. The fair-lending question (Q5) compares approval rates between lower- and higher-income tracts. Results are reported as an *approval gap*, never as discrimination: the data cannot show cause.
+
 ## Getting the data
 
 The raw files are not in the repository. Download them with the script below; it fetches the HMDA loan application CSVs and filer JSONs for Ohio and North Carolina, 2023 to 2025, plus the Census county reference, into `data/raw/` (about 1.1 GB).

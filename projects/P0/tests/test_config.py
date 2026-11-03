@@ -75,6 +75,27 @@ def test_bad_chunk_size_fails(raw):
         parse_config(raw)
 
 
+COUNTIES = {"name": "counties_2020", "path": "data/raw/counties_2020.txt", "format": "csv",
+            "kind": "counties", "delimiter": "|"}
+
+
+def test_counties_need_states(raw):
+    raw["sources"].append(dict(COUNTIES))
+    with pytest.raises(ConfigError, match="counties_2020: 'states' must be a non-empty list"):
+        parse_config(raw)
+
+
+def test_states_only_on_counties(raw):
+    raw["sources"][0]["states"] = ["OH"]
+    with pytest.raises(ConfigError, match="'states' only applies to counties"):
+        parse_config(raw)
+
+
+def test_counties_states_parse(raw):
+    raw["sources"].append({**COUNTIES, "states": ["OH", "NC"]})
+    assert parse_config(raw).sources_of("counties")[0].states == ("OH", "NC")
+
+
 def test_project_config_loads(monkeypatch):
     monkeypatch.setenv("GCP_PROJECT", "test-project")
     cfg = load_config(P0 / "config.yaml")

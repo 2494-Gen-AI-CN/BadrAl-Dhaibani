@@ -29,6 +29,7 @@ class Source:
     format: str
     kind: str
     delimiter: str = ","
+    states: tuple = ()          # counties only: state abbreviations to keep
 
 
 @dataclass(frozen=True)
@@ -65,8 +66,16 @@ def _parse_source(i, raw, base):
     if raw["kind"] not in KINDS:
         raise ConfigError(f"source {label}: unknown kind '{raw['kind']}' "
                           f"(expected one of {sorted(KINDS)})")
+    states = raw.get("states")
+    if raw["kind"] == "counties":
+        if not isinstance(states, list) or not states or not all(isinstance(s, str) for s in states):
+            raise ConfigError(f"source {label}: 'states' must be a non-empty list of state "
+                              f"abbreviations, e.g. [OH, NC]")
+    elif states is not None:
+        raise ConfigError(f"source {label}: 'states' only applies to counties sources")
     return Source(name=raw["name"], path=base / raw["path"], format=raw["format"],
-                  kind=raw["kind"], delimiter=raw.get("delimiter", ","))
+                  kind=raw["kind"], delimiter=raw.get("delimiter", ","),
+                  states=tuple(states or ()))
 
 
 def parse_config(raw, base=Path(".")):

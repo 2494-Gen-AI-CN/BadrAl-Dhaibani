@@ -62,6 +62,7 @@ sources:
     format: csv
     delimiter: "|"
     kind: counties
+    states: [OH, NC]              # keep only the states in scope; add new states here too
 
 filters:                          # rows outside scope are counted, not rejected
   loan_purpose: [1]               # home purchase

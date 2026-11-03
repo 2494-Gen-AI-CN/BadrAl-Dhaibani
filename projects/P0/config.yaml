@@ -1,0 +1,108 @@
+# Ingestion config for the P0 HMDA warehouse.
+# Adding a state or year is one new entry under `sources`.
+
+bigquery:
+  project: ${GCP_PROJECT}        # from .env, never committed
+  dataset: hmda_staging
+  location: US
+
+sources:
+  - name: lar_oh_2023
+    path: data/raw/lar_OH_2023.csv
+    format: csv
+    kind: lar
+  - name: lar_oh_2024
+    path: data/raw/lar_OH_2024.csv
+    format: csv
+    kind: lar
+  - name: lar_oh_2025
+    path: data/raw/lar_OH_2025.csv
+    format: csv
+    kind: lar
+  - name: lar_nc_2023
+    path: data/raw/lar_NC_2023.csv
+    format: csv
+    kind: lar
+  - name: lar_nc_2024
+    path: data/raw/lar_NC_2024.csv
+    format: csv
+    kind: lar
+  - name: lar_nc_2025
+    path: data/raw/lar_NC_2025.csv
+    format: csv
+    kind: lar
+
+  - name: filers_oh_2023
+    path: data/raw/filers_OH_2023.json
+    format: json
+    kind: filers
+  - name: filers_oh_2024
+    path: data/raw/filers_OH_2024.json
+    format: json
+    kind: filers
+  - name: filers_oh_2025
+    path: data/raw/filers_OH_2025.json
+    format: json
+    kind: filers
+  - name: filers_nc_2023
+    path: data/raw/filers_NC_2023.json
+    format: json
+    kind: filers
+  - name: filers_nc_2024
+    path: data/raw/filers_NC_2024.json
+    format: json
+    kind: filers
+  - name: filers_nc_2025
+    path: data/raw/filers_NC_2025.json
+    format: json
+    kind: filers
+
+  - name: counties_2020
+    path: data/raw/counties_2020.txt
+    format: csv
+    delimiter: "|"
+    kind: counties
+
+filters:                          # rows outside scope are counted, not rejected
+  loan_purpose: [1]               # home purchase
+  lien_status: [1]                # first lien
+  occupancy_type: [1]             # principal residence
+  business_or_commercial_purpose: [2]
+  action_taken: [1, 2, 3, 4, 5]   # drop 6 (purchased loans) and preapprovals
+  derived_dwelling_category:
+    - "Single Family (1-4 Units):Site-Built"
+    - "Single Family (1-4 Units):Manufactured"
+
+# LAR columns to read (the raw files have 99); race, ethnicity and sex are left out by design
+lar_columns:
+  - activity_year
+  - lei
+  - state_code
+  - county_code
+  - census_tract
+  - derived_msa-md                # hyphen, as in the raw files
+  - action_taken
+  - denial_reason-1
+  - denial_reason-2
+  - denial_reason-3
+  - denial_reason-4
+  - loan_type
+  - loan_purpose
+  - lien_status
+  - occupancy_type
+  - derived_dwelling_category
+  - business_or_commercial_purpose
+  - loan_amount
+  - property_value
+  - income
+  - interest_rate
+  - rate_spread
+  - loan_term
+  - loan_to_value_ratio          # the public file calls CLTV this
+  - debt_to_income_ratio
+  - applicant_age
+  - tract_to_msa_income_percentage
+  - tract_minority_population_percent
+  - tract_population
+
+chunk_size: 100000                # read big CSVs in chunks

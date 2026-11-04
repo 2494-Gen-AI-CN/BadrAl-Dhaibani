@@ -2,3 +2,6 @@ data/raw/
 .env
 *-key.json
 credentials*.json
+
+# the repo-root .gitignore ignores build/ folders; the warehouse SQL lives in one
+!sql/build/

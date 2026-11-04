@@ -95,7 +95,22 @@ PYTHONPATH=src python -m hmda.run --force    # reload every file
 
 The job creates the `hmda_staging` dataset if it is missing, and exits non-zero if any file failed; the other files still load.
 
-**5. Run the tests**
+**5. Build the warehouse**
+
+```bash
+./scripts/build.sh
+```
+
+This runs `sql/build/*.sql` in order with the `bq` command-line tool, which comes with the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed for step 2. It creates the `hmda_dw` dataset if it is missing, rebuilds every table with `CREATE OR REPLACE`, and ends with checks that stop the build if any fail (see [The warehouse](#the-warehouse)). Rerunning it gives the same tables.
+
+The analysis queries are in `sql/`, one file per question, and run on their own:
+
+```bash
+set -a; source .env; set +a
+bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
+```
+
+**6. Run the tests**
 
 ```bash
 python -m pytest
@@ -170,6 +185,45 @@ Two columns are derived in Python (`src/hmda/features.py`, with pytest tests) an
 The 80% and 120% cut-offs are the low/moderate, middle and upper income levels regulators use in Community Reinvestment Act exams.
 
 `tract_income_band` is null when the percentage is missing or 0. HMDA reports 0 for about 90 populated tracts a year whose census median income is not available (about 0.5% of rows), so 0 means unknown, not poor. `loan_to_income` is null when income is missing, zero or negative.
+
+## The warehouse
+
+`hmda_dw` is a star schema: one fact table with one row per application, and five dimensions it joins to through surrogate keys.
+
+| Table | One row per | Rows | Holds |
+| --- | --- | --- | --- |
+| `fact_application` | application | 996,397 | outcome flags (`is_approved`, `is_denied`, `is_originated`), money fields, rate spread, both features |
+| `dim_lender` | lender version | 1,377 | name and size tier, with `effective_from`, `effective_to` and `is_current` |
+| `dim_geography` | census tract and metro area | 6,617 | tract, county name, state, metro area code |
+| `dim_product` | loan type, lien and dwelling | 8 | `Conventional`, `FHA`, `VA`, `USDA`; site-built or manufactured home |
+| `dim_outcome` | action taken and first denial reason | 15 | what happened, whether it was decided, and why it was denied |
+| `dim_applicant_profile` | income, debt-to-income and loan-to-value band | 239 | bands with a sort order for charts |
+
+Every code is mapped to a plain label in the dimensions, so no query or chart shows that loan type 2 means FHA. Keys are fingerprints of each dimension's natural key, so they stay the same when the warehouse is rebuilt. The view `lar_prepared` works out the bands and keys once, and the dimensions and the fact table are all built from it.
+
+**Geography is keyed on tract and metro area together.** The 2024 update to federal metro area definitions moved 843 of the 5,774 tracts into a different metro, so the same tract can sit in two metros in different years. County and state never change for a tract.
+
+**Applicant bands.** Income: `<$50k`, `$50k-<$100k`, `$100k-<$150k`, `$150k-<$250k`, `$250k+`. Loan-to-value: `<=80%` (where mortgage insurance starts), `>80%-90%`, `>90%-95%`, `>95%`. Debt-to-income uses the bands from cleaning. Each has a `Not reported` band.
+
+### The lender history (type 2 dimension)
+
+Each year's filers file gives one name per lender (LEI). The build compares each lender year with the one before. A change in the normalised name (upper case, single spaces) or in the size tier opens a new version. The new version's `effective_from` is 1 January of that year, the previous version's `effective_to` is the day before, and `is_current` moves to the new row. The fact table binds each application to the version valid in its year, so Q2 reports market share under the name each lender filed under that year.
+
+Size tier counts the lender's home-purchase applications across both states that year: `National` is 2,000 or more, `Regional` is 200 or more, and anything below is `Local`.
+
+In the real data 14 lenders changed name and there are 83 tier changes, so no change had to be invented. Some name changes are a switch between a trade name and a legal name, not a new company. For example, the lender filed as United Wholesale Mortgage in 2023 and as United Shore Financial Services, its legal name, in 2024 and 2025.
+
+**Lenders with no name that year.** 19 lenders filed 728 applications (0.07%) in years when they have no row in the filers file. Their applications are kept, and the lender is named `UNKNOWN LENDER (<lei>)` with `name_in_filers = FALSE`. A name from another year is never borrowed, because it could be wrong for that year. Q2 does not count a change to or from an unknown name as a rename.
+
+### Build checks
+
+`sql/build/08_checks.sql` stops the build if any of these fail:
+
+- `fact_application` has exactly as many rows as `stg_lar`, so no application is lost or doubled by a join.
+- Every dimension key is unique, and every fact key finds its dimension row.
+- Every lender has exactly one current version.
+- Every code has a label.
+- (In `06_dim_lender.sql`) the per-state filers files never give the same lender two different names in one year.
 
 ## Team
 

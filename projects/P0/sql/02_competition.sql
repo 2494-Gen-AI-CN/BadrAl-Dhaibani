@@ -2,6 +2,8 @@
 --                 changed as lenders renamed, merged or changed tier?
 -- Meaning:        who Lakeshore would take share from, shown under the name
 --                 each lender filed under that year, not only its name today.
+-- Market:  site-built homes only, the market Lakeshore would enter; manufactured
+--          homes are a specialist niche (see README, "Manufactured homes").
 -- Uses the type 2 lender history: each application joins the lender version
 -- valid in its year. renamed_since is only TRUE when both names come from the
 -- filers file; a year with no filers row is UNKNOWN, not a rename.
@@ -16,6 +18,8 @@ WITH share AS (
   FROM hmda_dw.fact_application f
   JOIN hmda_dw.dim_lender l     USING (lender_key)
   JOIN hmda_dw.dim_geography g  USING (geography_key)
+  JOIN hmda_dw.dim_product p    USING (product_key)
+  WHERE p.dwelling_label = 'Site-built home'
   GROUP BY 1, 2, 3, 4, 5, 6
 )
 SELECT s.state, s.activity_year, s.lei, s.name_that_year, s.tier_that_year,

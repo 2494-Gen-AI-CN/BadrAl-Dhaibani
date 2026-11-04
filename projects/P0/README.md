@@ -228,6 +228,34 @@ In the real data 14 lenders changed name and there are 83 tier changes, so no ch
 - Every code has a label.
 - (In `06_dim_lender.sql`) the per-state filers files never give the same lender two different names in one year.
 
+## Analysis queries
+
+One file per client question in `sql/`, each opening with the question and what the answer means for Lakeshore. "Decided" means the lender made a decision: approved (originated, or approved but not accepted) or denied. Withdrawn and incomplete files stay out of approval and denial rates.
+
+| File | Question |
+| --- | --- |
+| `01_demand.sql` | Which counties have the most applications, and where are they growing fastest (2023 to 2025)? |
+| `02_competition.sql` | Which lenders hold each state, under the name they filed under that year (uses the lender history)? |
+| `03_approval.sql` | Denial rate and top denial reason by loan type and debt-to-income band |
+| `04_pricing.sql` | Median rate spread on 2025 conventional originations by county, with the number of active lenders |
+| `05_risk.sql` | Approval gap between Upper and Low/Moderate-income tracts by county, 2025 |
+| `06_correlation.sql` | Correlation between county median loan-to-income and denial rate, 2025 |
+
+### Manufactured homes
+
+All six queries count **site-built homes only**. Manufactured homes stay in the warehouse but are left out of the analysis, because they are a specialist market that Lakeshore would not enter and they distort every county comparison:
+
+- In 2025 they were denied about 51% of the time, against 7 to 8% for site-built homes.
+- A county's share of manufactured homes tracks its denial rate almost exactly (r = 0.95 in North Carolina, 0.91 in Ohio).
+- They cluster in lower-income tracts, so they inflated the neighbourhood approval gaps. Pitt County's gap was 27.9 points with them and is 10.0 without; Craven County's fell from 23.8 to 7.4.
+- They are written by specialist lenders. Vanderbilt Mortgage, which lends only on manufactured homes, was North Carolina's largest lender by applications when they were included.
+
+### The correlation
+
+Across counties, how far buyers borrow against their income barely predicts how often they are turned down: Pearson r is 0.13 across both states (120 counties), 0.13 in North Carolina and −0.24 in Ohio. Before manufactured homes were left out, r was −0.72 in North Carolina, but that measured the share of manufactured homes, which have small loans and high denial rates, not borrower stretch.
+
+Even a strong r would not show cause. HMDA has no credit scores, house prices push up loan-to-income and may also change who applies, and the product mix (FHA against conventional) differs by county.
+
 ## Team
 
 Tristan Nguyen and Badr Al-Dhaibani. This hand-in lives in Badr's learner repository; Tristan's is [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).

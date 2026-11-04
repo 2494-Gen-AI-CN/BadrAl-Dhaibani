@@ -158,6 +158,19 @@ A file missing an expected column fails as a whole and is logged as `failed`. Ap
 
 HMDA has no application ID, and the public file rounds and buckets values to protect privacy (loan amounts to $10,000 bands, for example). Two genuine applications can therefore look identical. To keep that risk low, the duplicate rule compares all 99 raw columns, including the demographic columns the project otherwise drops, rather than only the columns kept. The current load rejects 502 rows as duplicates, 0.05% of in-scope rows. Some of these may be real applications that happen to match, so the true number of duplicate records is at most 502.
 
+## Features
+
+Two columns are derived in Python (`src/hmda/features.py`, with pytest tests) and stored on every staging row, so the warehouse and the queries use them as they are.
+
+| Feature | Rule | Used for |
+| --- | --- | --- |
+| `tract_income_band` | The tract's median family income as a % of its metro's median: below 80 is `Low/Moderate`, 80 to below 120 is `Middle`, 120 and up is `Upper` | Q5, the approval gap between lower- and higher-income neighbourhoods |
+| `loan_to_income` | `loan_amount / (income × 1000)`, rounded to 2 places; `income` is reported in thousands of dollars | The correlation between how far buyers stretch and how often they are denied |
+
+The 80% and 120% cut-offs are the low/moderate, middle and upper income levels regulators use in Community Reinvestment Act exams.
+
+`tract_income_band` is null when the percentage is missing or 0. HMDA reports 0 for about 90 populated tracts a year whose census median income is not available (about 0.5% of rows), so 0 means unknown, not poor. `loan_to_income` is null when income is missing, zero or negative.
+
 ## Team
 
 Tristan Nguyen and Badr Al-Dhaibani. This hand-in lives in Badr's learner repository; Tristan's is [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).

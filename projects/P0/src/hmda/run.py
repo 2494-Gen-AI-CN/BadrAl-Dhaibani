@@ -16,6 +16,7 @@ import pandas as pd
 
 from hmda.clean import REJECT_REASONS, apply_scope_filter, clean_filers, clean_lar
 from hmda.config import load_config
+from hmda.features import add_features
 from hmda.load import (COUNT_COLUMNS, FAILED, LOADED, REJECTS_SCHEMA, REJECTS_TABLE,
                        SKIPPED, STAGING_TABLES, BigQueryWarehouse, file_sha256,
                        is_unchanged, log_row, new_run_id, source_table)
@@ -44,7 +45,7 @@ def _concat(frames):
 
 def read_lar(source, cfg):
     """Chunked read; every raw column is kept until cleaning so the duplicate
-    rule can compare whole rows."""
+    rule can compare whole rows. Features are added to the cleaned rows."""
     seen, goods, rejects = set(), [], []
     rows_read = rows_filtered = 0
     chunks = pd.read_csv(source.path, sep=source.delimiter, dtype=str,
@@ -54,7 +55,7 @@ def read_lar(source, cfg):
         in_scope, n_filtered = apply_scope_filter(chunk, cfg.filters)
         rows_filtered += n_filtered
         good, rej = clean_lar(in_scope, cfg.lar_columns, seen)
-        goods.append(good)
+        goods.append(add_features(good))
         rejects.append(rej)
     good, rej = _concat(goods), _concat(rejects)
     return Result(good, rej, _counts(rows_read, rows_filtered, rej, len(good)))

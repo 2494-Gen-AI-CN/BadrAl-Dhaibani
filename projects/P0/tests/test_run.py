@@ -10,12 +10,13 @@ from hmda.run import run
 
 LAR_COLUMNS = ["activity_year", "lei", "county_code", "census_tract", "action_taken",
                "loan_purpose", "loan_amount", "income", "debt_to_income_ratio",
-               "interest_rate", "rate_spread"]
+               "interest_rate", "rate_spread", "tract_to_msa_income_percentage"]
 
 ROW = {"activity_year": "2024", "lei": "549300GKFNPRWNS0GF29", "county_code": "39049",
        "census_tract": "39049001000", "action_taken": "1", "loan_purpose": "1",
        "loan_amount": "255000", "income": "104", "debt_to_income_ratio": "41",
-       "interest_rate": "6.5", "rate_spread": "0.42", "derived_race": "White"}
+       "interest_rate": "6.5", "rate_spread": "0.42", "tract_to_msa_income_percentage": "85",
+       "derived_race": "White"}
 
 
 class FakeWarehouse:
@@ -102,6 +103,8 @@ def test_first_run_loads_everything_with_counts(setup):
     assert log["counties_2020"]["rows_filtered"] == 1 and log["counties_2020"]["rows_loaded"] == 2
 
     assert len(wh.rows("stg_lar")) == 2
+    assert list(wh.rows("stg_lar")["tract_income_band"]) == ["Middle", "Middle"]
+    assert list(wh.rows("stg_lar")["loan_to_income"]) == [2.45, 2.83]
     assert set(wh.rows("stg_lar")["source_name"]) == {"lar_oh_2024"}
     assert list(wh.rows("stg_filers")["name"]) == ["CMG MORTGAGE"]
     assert sorted(wh.rows("stg_counties")["county_code"]) == ["37119", "39049"]
@@ -139,6 +142,8 @@ def test_force_reloads_unchanged_files(setup):
     second = run(cfg, wh, force=True, run_id="r2", echo=lambda _: None)
     assert {r["status"] for r in second} == {"loaded"}
     assert len(wh.rows("stg_lar")) == 2
+    assert list(wh.rows("stg_lar")["tract_income_band"]) == ["Middle", "Middle"]
+    assert list(wh.rows("stg_lar")["loan_to_income"]) == [2.45, 2.83]
 
 
 def test_failed_source_is_logged_and_others_still_load(setup):

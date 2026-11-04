@@ -113,7 +113,16 @@ set -a; source .env; set +a
 bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
 ```
 
-**6. Run the tests**
+**6. Draw the charts**
+
+```bash
+PYTHONPATH=src python charts/make_charts.py             # query the warehouse, save CSVs and PNGs
+PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw from the saved CSVs, no BigQuery
+```
+
+The five PNGs land in `charts/`, and the data behind each one in `charts/data/` (see [Charts](#charts)).
+
+**7. Run the tests**
 
 ```bash
 python -m pytest
@@ -255,6 +264,20 @@ All six queries count **site-built homes only**. Manufactured homes stay in the 
 Across counties, how far buyers borrow against their income barely predicts how often they are turned down: Pearson r is 0.13 across both states (120 counties), 0.13 in North Carolina and −0.24 in Ohio. Before manufactured homes were left out, r was −0.72 in North Carolina, but that measured the share of manufactured homes, which have small loans and high denial rates, not borrower stretch.
 
 Even a strong r would not show cause. HMDA has no credit scores, house prices push up loan-to-income and may also change who applies, and the product mix (FHA against conventional) differs by county.
+
+## Charts
+
+`charts/make_charts.py` pulls each chart's data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. Every title is written from the numbers, so it stays true if the data changes. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
+
+| File | Shows | Data |
+| --- | --- | --- |
+| `01_demand.png` | 2025 applications in the ten largest counties per state, coloured by growth or decline since 2023 | `01_demand.sql` |
+| `02_competition.png` | 2025 market share of the ten largest lenders per state, under the name each filed under that year, with name changes footnoted | `02_competition.sql`, `dim_lender` |
+| `03_denials_by_dti.png` | Denial rate by debt-to-income band for conventional, FHA and VA loans | `03_approval.sql` |
+| `04_correlation.png` | One dot per county: median loan-to-income against denial rate, with r for each state | the county points behind `06_correlation.sql` |
+| `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
+
+Colours come from a palette checked for colour-blind readers. Lines and dots are also labelled directly, so no chart depends on colour alone.
 
 ## Team
 

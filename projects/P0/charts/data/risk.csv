@@ -1,0 +1,46 @@
+state,county_name,decided,decided_low_mod,decided_upper,approval_low_mod_pct,approval_upper_pct,approval_gap_pts
+North Carolina,Pitt County,1895,243,613,85.6,95.6,10.0
+Ohio,Clark County,1542,442,469,86.2,95.7,9.5
+Ohio,Cuyahoga County,11067,2876,4106,85.7,94.8,9.1
+North Carolina,Gaston County,3689,1476,806,86.3,95.3,9.0
+Ohio,Mahoning County,2148,430,858,87.2,95.9,8.7
+North Carolina,Brunswick County,3828,992,641,86.2,94.2,8.0
+North Carolina,Forsyth County,4582,649,1910,86.9,94.8,7.9
+North Carolina,Randolph County,1320,350,116,89.7,97.4,7.7
+North Carolina,Lincoln County,1290,444,367,89.4,97.0,7.6
+North Carolina,Wayne County,1313,237,513,86.1,93.6,7.5
+Ohio,Lucas County,3703,753,1633,88.0,95.5,7.5
+North Carolina,Craven County,1491,132,549,87.1,94.5,7.4
+Ohio,Montgomery County,6355,1532,1905,88.3,94.8,6.6
+North Carolina,Mecklenburg County,14233,3819,6580,88.8,95.0,6.1
+Ohio,Franklin County,12906,3642,4107,89.6,95.5,6.0
+North Carolina,Wake County,15794,3414,5745,90.2,95.5,5.2
+Ohio,Hamilton County,8494,2404,2944,90.1,95.2,5.0
+Ohio,Richland County,1203,202,330,90.1,94.8,4.7
+North Carolina,Guilford County,5258,881,2517,89.9,94.5,4.6
+Ohio,Summit County,5775,1505,2074,90.6,95.1,4.5
+North Carolina,Cumberland County,3899,564,1508,89.5,93.6,4.1
+Ohio,Lorain County,4082,680,1517,89.9,93.8,4.0
+Ohio,Butler County,4271,1006,1337,91.3,94.7,3.4
+North Carolina,Alamance County,2405,594,672,91.1,94.3,3.3
+North Carolina,Davidson County,2181,444,562,89.9,93.1,3.2
+North Carolina,Durham County,3870,929,1854,91.9,94.2,2.3
+North Carolina,Iredell County,3126,633,652,91.5,93.7,2.2
+Ohio,Greene County,2141,388,1328,93.0,95.1,2.1
+Ohio,Portage County,1390,244,351,92.2,94.0,1.8
+Ohio,Clermont County,2912,583,710,92.1,93.9,1.8
+Ohio,Stark County,3892,567,1237,90.8,92.5,1.7
+North Carolina,Henderson County,1423,308,183,92.9,94.5,1.7
+North Carolina,Johnston County,4204,1965,328,91.6,93.0,1.4
+North Carolina,Rockingham County,1058,336,111,91.4,92.8,1.4
+North Carolina,Union County,3850,448,1772,92.0,93.2,1.3
+Ohio,Lake County,2856,366,1047,92.3,93.4,1.1
+North Carolina,Buncombe County,2373,387,774,94.3,94.8,0.5
+Ohio,Licking County,2107,417,600,92.6,92.8,0.3
+Ohio,Trumbull County,1830,287,352,93.0,92.9,-0.1
+North Carolina,Cabarrus County,3236,518,1423,92.9,92.3,-0.6
+North Carolina,Catawba County,2310,195,982,92.3,91.8,-0.6
+North Carolina,Onslow County,3680,366,1327,95.6,94.8,-0.8
+North Carolina,New Hanover County,2553,625,1116,95.7,94.4,-1.2
+Ohio,Miami County,1391,132,573,95.5,93.5,-1.9
+Ohio,Fairfield County,2131,491,824,94.1,89.8,-4.3

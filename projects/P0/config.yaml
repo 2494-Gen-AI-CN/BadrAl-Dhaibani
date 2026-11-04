@@ -74,8 +74,9 @@ filters:                          # rows outside scope are counted, not rejected
     - "Single Family (1-4 Units):Site-Built"
     - "Single Family (1-4 Units):Manufactured"
 
-# LAR columns to read (the raw files have 99); race, ethnicity, sex and age are left out by
-# design so no conclusion rests on applicant demographics (see README, "Non-sensitive by design")
+# LAR columns to read (the raw files have 99). Race, ethnicity, sex and age are left out by
+# design, and so is tract_minority_population_percent (the tract's racial make-up), so no
+# conclusion rests on demographics (see README, "Non-sensitive by design")
 lar_columns:
   - activity_year
   - lei
@@ -103,7 +104,6 @@ lar_columns:
   - loan_to_value_ratio          # the public file calls CLTV this
   - debt_to_income_ratio
   - tract_to_msa_income_percentage
-  - tract_minority_population_percent
   - tract_population
 
 chunk_size: 100000                # read big CSVs in chunks

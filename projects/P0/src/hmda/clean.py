@@ -23,7 +23,7 @@ CODE_MARKERS = MISSING | {"1111", "8888", "9999"}
 # Continuous fields only use "NA" / "Exempt"; 8888 could be a real value here
 NUMERIC_COLUMNS = ["loan_amount", "property_value", "income", "interest_rate", "rate_spread",
                    "loan_term", "loan_to_value_ratio", "tract_to_msa_income_percentage",
-                   "tract_minority_population_percent", "tract_population"]
+                   "tract_population"]
 
 RATE_COLUMNS = ["interest_rate", "rate_spread"]
 ORIGINATED = 1

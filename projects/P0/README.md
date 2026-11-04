@@ -21,7 +21,7 @@ The answer comes from three years of public federal mortgage data (HMDA, 2023 to
 
 ## Non-sensitive by design
 
-The public HMDA files are already modified to protect privacy (for example, loan amounts are rounded to $10,000 bands). This project goes further: it leaves out every column that describes the applicant's demographics, so no finding or recommendation rests on who an applicant is. Race, ethnicity, sex and age are all protected under US fair lending law, and the client's questions do not need them.
+The public HMDA files are already modified to protect privacy (for example, loan amounts are rounded to $10,000 bands). This project goes further: it leaves out every column that describes the applicant's demographics, and the one that describes the neighbourhood's racial make-up, so no finding or recommendation rests on race, ethnicity, sex or age. All four are protected under US fair lending law, and the client's questions do not need them.
 
 Columns dropped deliberately:
 
@@ -31,10 +31,13 @@ Columns dropped deliberately:
 | Ethnicity | `derived_ethnicity`, `applicant_ethnicity-1` to `-5`, `co-applicant_ethnicity-1` to `-5`, `applicant_ethnicity_observed`, `co-applicant_ethnicity_observed` |
 | Sex | `derived_sex`, `applicant_sex`, `co-applicant_sex`, `applicant_sex_observed`, `co-applicant_sex_observed` |
 | Age | `applicant_age`, `co-applicant_age`, `applicant_age_above_62`, `co-applicant_age_above_62` |
+| Neighbourhood race and ethnicity | `tract_minority_population_percent`: the share of the census tract's residents who are not non-Hispanic white |
 
 None of these columns are listed in `lar_columns` in `config.yaml`, so they never reach BigQuery, staging or the rejects table. The duplicate check briefly reads whole raw rows in memory, so two applications that differ only in these columns are not mistaken for duplicates, but nothing from those columns is stored.
 
-What remains describes the neighbourhood, not the person: `tract_to_msa_income_percentage`, `tract_minority_population_percent` and `tract_population` are census-tract figures. The fair-lending question (Q5) compares approval rates between lower- and higher-income tracts. Results are reported as an *approval gap*, never as discrimination: the data cannot show cause.
+A census tract is a small area the Census Bureau draws for statistics, usually 1,200 to 8,000 people, roughly a neighbourhood. `tract_minority_population_percent` is the same for every application in a tract and says nothing about the applicant, but it is still a measure of race and ethnicity, so it is left out with the applicant columns. It matters for a real fair lending review: regulators compare a bank's approvals in majority-minority tracts against other tracts. Lakeshore's compliance team would add it for that review. This project does not need it.
+
+What remains describes the neighbourhood's income and size, not the person or the neighbourhood's racial make-up: `tract_to_msa_income_percentage` and `tract_population` are census-tract figures. The fair-lending question (Q5) compares approval rates between lower- and higher-income tracts. Results are reported as an *approval gap*, never as discrimination: the data cannot show cause.
 
 ## Dataset
 

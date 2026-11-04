@@ -24,7 +24,6 @@ SELECT
   p.loan_to_income,
   p.tract_income_band,
   p.tract_to_msa_income_percentage,
-  p.tract_minority_population_percent,
   p.tract_population,
   p.denial_reason_2,
   p.denial_reason_3,

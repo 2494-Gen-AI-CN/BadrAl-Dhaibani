@@ -42,7 +42,7 @@ What remains describes the neighbourhood's income and size, not the person or th
 ## Dataset
 
 Public loan-level mortgage data published under the Home Mortgage Disclosure Act (HMDA), from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) ([API documentation](https://ffiec.cfpb.gov/documentation/api/data-browser/)). No key is needed.
-
+2
 | Source | Format | Files | Becomes |
 | --- | --- | --- | --- |
 | Loan application register (LAR) | CSV, 99 columns | one per state and year: Ohio and North Carolina, 2023 to 2025 | `stg_lar` |
@@ -281,4 +281,4 @@ Colours come from a palette checked for colour-blind readers. Lines and dots are
 
 ## Team
 
-Tristan Nguyen and Badr Al-Dhaibani. This hand-in lives in Badr's learner repository; Tristan's is [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).
+Tristan Nguyen and Badr Al-Dhaibani. Tristan's repo: [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).

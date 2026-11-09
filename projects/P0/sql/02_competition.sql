@@ -7,6 +7,8 @@
 -- Uses the type 2 lender history: each application joins the lender version
 -- valid in its year. renamed_since is only TRUE when both names come from the
 -- filers file; a year with no filers row is UNKNOWN, not a rename.
+-- Order:   latest year first in each state, so 2025 (the year on the chart)
+--          is what shows first.
 WITH share AS (
   SELECT f.activity_year, g.state_name AS state, l.lei,
     l.lender_name AS name_that_year,
@@ -30,4 +32,4 @@ SELECT s.state, s.activity_year, s.lei, s.name_that_year, s.tier_that_year,
 FROM share s
 JOIN hmda_dw.dim_lender cur ON cur.lei = s.lei AND cur.is_current
 QUALIFY RANK() OVER (PARTITION BY s.activity_year, s.state ORDER BY s.apps DESC) <= 10
-ORDER BY s.state, s.activity_year, s.apps DESC;
+ORDER BY s.state, s.activity_year DESC, s.apps DESC;

@@ -1,5 +1,9 @@
 # P0 — Mortgage Market Entry: HMDA Data Warehouse
 
+## Team
+
+Tristan Nguyen and Badr Al-Dhaibani. Tristan's repo: [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).
+
 ## Business Case
 **Lakeshore Bank USA** is the US arm of a fictional Canadian bank. It writes home-purchase mortgages in New York today, and its board has approved a push into one new state in 2027. The two candidates are **Ohio** and **North Carolina**.
 
@@ -42,7 +46,7 @@ What remains describes the neighbourhood's income and size, not the person or th
 ## Dataset
 
 Public loan-level mortgage data published under the Home Mortgage Disclosure Act (HMDA), from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) ([API documentation](https://ffiec.cfpb.gov/documentation/api/data-browser/)). No key is needed.
-2
+
 | Source | Format | Files | Becomes |
 | --- | --- | --- | --- |
 | Loan application register (LAR) | CSV, 99 columns | one per state and year: Ohio and North Carolina, 2023 to 2025 | `stg_lar` |
@@ -280,7 +284,3 @@ Even a strong r would not show cause. HMDA has no credit scores, house prices pu
 | `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
 
 Colours come from a palette checked for colour-blind readers. Lines and dots are also labelled directly, so no chart depends on colour alone.
-
-## Team
-
-Tristan Nguyen and Badr Al-Dhaibani. Tristan's repo: [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).

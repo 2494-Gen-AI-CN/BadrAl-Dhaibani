@@ -16,6 +16,8 @@ SURFACE, INK, INK_2, MUTED = '#fcfcfb', '#0b0b0b', '#52514e', '#898781'
 GRID, AXIS = '#e1e0d9', '#c3c2b7'
 # One colour per year, light to dark, so the latest year stands out.
 YEAR_COLOR = {2023: '#a5c4ea', 2024: '#5d97dd', 2025: '#1e5aa8'}
+# Growth labels: green up, red down. Darker than Tristan's AQUA/RED so small text stays readable.
+UP, DOWN = '#137a52', '#c4302f'
 
 plt.rcParams.update({
     'font.family': ['Arial', 'DejaVu Sans'],
@@ -57,19 +59,11 @@ df.to_csv(ROOT / 'charts' / 'data' / 'q1_demand.csv', index=False)
 
 top = df[df.rank_in_state <= 10]
 
-# Title and subtitle are written from the numbers, so they stay true if the data changes.
-big = top.sort_values('apps_2025', ascending=False).iloc[0]
-fast = top.sort_values('growth_pct', ascending=False).iloc[0]
-if big.apps_2024 < big.apps_2023 and big.apps_2025 < big.apps_2024:
-    trend = 'shrank two years running'
-elif big.apps_2024 > big.apps_2023 and big.apps_2025 > big.apps_2024:
-    trend = 'grew two years running'
-else:
-    trend = 'changed direction in 2025'
-title = f'{big.county_name}, the biggest market, {trend} ({signed(big.growth_pct)}% since 2023)'
-subtitle = (f'Home-purchase applications, ten largest counties per state in 2025, '
-            f'with 2023 and 2024 for comparison.\nAmong these twenty, '
-            f'{fast.county_name}, {fast.state_name} grew fastest ({signed(fast.growth_pct)}% since 2023).')
+# Hand-written takeaway for the Ohio vs North Carolina decision. Numbers checked against
+# charts/data/q1_demand.csv; re-check them if the data changes.
+title = "Ohio's largest counties are growing; North Carolina's two biggest are shrinking"
+subtitle = ("Combined, Ohio's ten largest counties grew 3.0% from 2023 to 2025, and 7 of the 10 grew.\n"
+            "North Carolina's ten fell 3.8%, led by Wake (−12.1%) and Mecklenburg (−6.8%).")
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
@@ -91,7 +85,8 @@ for ax, state in zip(axes, ['Ohio', 'North Carolina']):
     longest = group[['apps_2023', 'apps_2024', 'apps_2025']].max(axis=1)
     for pos, end, pct in zip(y, longest, group.growth_pct):
         ax.annotate(f'{signed(pct)}%', (end, pos), xytext=(6, 0),
-                    textcoords='offset points', va='center', size=11, color=INK_2)
+                    textcoords='offset points', va='center', size=11,
+                    color=UP if pct > 0 else DOWN)
 
     ax.set_yticks(y, group.county_name.str.removesuffix(' County'))
     ax.set_title(state, loc='left', size=14, weight='bold', color=INK, pad=10)

@@ -148,6 +148,8 @@ Every run appends one row per source file to `load_log`:
 
 **Running the job twice adds no data.** A file whose fingerprint matches its last successful load is skipped. The second run still appends one `skipped` row per file to `load_log`, as an audit trail, but staging is unchanged. A failed file is retried on the next run.
 
+`sql/00_load_log.sql` sums the latest successful load of each loan file. Its TOTAL row gives 2,919,828 rows read, 1,010,939 in scope, 14,542 rejected and 996,397 loaded.
+
 The skip check looks only at the file's contents. After changing the code or `config.yaml`, run with `--force` so every file is reloaded under the new rules.
 
 ## Cleansing rules

@@ -1,7 +1,9 @@
-"""Draw the five P0 charts from the hmda_dw warehouse.
+"""Draw P0 charts 2 to 5 from the hmda_dw warehouse.
 
     PYTHONPATH=src python charts/make_charts.py             # query BigQuery, save CSVs and PNGs
     PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw from the saved CSVs
+
+The Q1 demand chart is drawn separately by charts/q1_demand.py.
 
 Each chart's data is saved as charts/data/<name>.csv, the table view of the
 chart, and every title is written from the numbers, so a rebuild on new data
@@ -17,18 +19,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
-from matplotlib.patches import Patch  # noqa: E402
-from matplotlib.ticker import FuncFormatter, PercentFormatter, StrMethodFormatter  # noqa: E402
+from matplotlib.ticker import FuncFormatter, PercentFormatter  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SQL = ROOT / "sql"
 OUT = ROOT / "charts"
 DATA = OUT / "data"
 
-# ---- palette (validated: categorical slots 1-3, and blue/red for growth) ----
+# ---- palette (validated: categorical slots 1-3) ----
 SURFACE, INK, INK_2, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#898781"
 GRID, AXIS = "#e1e0d9", "#c3c2b7"
-BLUE, ORANGE, AQUA, RED = "#2a78d6", "#eb6834", "#1baf7a", "#e34948"
+BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 STATE_COLOR = {"Ohio": BLUE, "North Carolina": ORANGE}
 STATE_ABBR = {"Ohio": "OH", "North Carolina": "NC"}
 
@@ -87,8 +88,7 @@ ORDER BY 1, 2
 """
 
 QUERIES = {
-    "demand": (SQL / "01_demand.sql").read_text,
-    "competition": (SQL / "02_competition.sql").read_text,
+    "competition":(SQL / "02_competition.sql").read_text,
     "lender_names": lambda: LENDER_NAMES_SQL,
     "approval": (SQL / "03_approval.sql").read_text,
     "correlation_points": lambda: CORRELATION_POINTS_SQL,
@@ -140,11 +140,6 @@ def county_label(county_name, state):
     return f"{county_name.removesuffix(' County')}, {STATE_ABBR.get(state, state)}"
 
 
-def signed(value, digits=1):
-    """+9.1 / −12.1, with a real minus sign."""
-    return f"{value:+.{digits}f}".replace("-", "\u2212")
-
-
 def num(value, digits=2):
     return f"{value:.{digits}f}".replace("-", "\u2212")
 
@@ -189,42 +184,6 @@ def full_name_label(name):
             cased = FULL_SUFFIX_CASE.get(bare.capitalize(), bare.capitalize())
         words.append(cased + tail)
     return " ".join(words)
-
-
-# ---- 1. demand -----------------------------------------------------------------
-
-def chart_demand(demand):
-    top = (demand.sort_values("apps_2025", ascending=False)
-           .groupby("state", sort=False).head(10))
-    big = top.iloc[0]
-    fast = top.sort_values("growth_pct", ascending=False).iloc[0]
-    verb = "shrank" if big.growth_pct < 0 else "grew"
-    title = (f"{big.county_name} is the biggest market, but it {verb} "
-             f"{abs(big.growth_pct):.0f}% since 2023")
-    subtitle = (f"Home-purchase applications in 2025, ten largest counties per state. "
-                f"Among these twenty, {fast.county_name}, {fast.state} grew fastest "
-                f"({signed(fast.growth_pct, 0)}% since 2023).")
-    fig = new_figure(title, subtitle, top=0.68)
-    axes = fig.subplots(1, 2, sharex=True)
-    fig.subplots_adjust(wspace=0.32, left=0.12)
-    for ax, state in zip(axes, ["Ohio", "North Carolina"]):
-        rows = top[top.state == state].iloc[::-1]
-        colors = [BLUE if g >= 0 else RED for g in rows.growth_pct]
-        ax.barh(rows.county_name.str.removesuffix(" County"), rows.apps_2025,
-                color=colors, height=0.68)
-        for y, (apps, growth) in enumerate(zip(rows.apps_2025, rows.growth_pct)):
-            ax.text(apps, y, f"  {signed(growth)}%", va="center", size=11, color=INK_2)
-        ax.set_title(state, loc="left", size=14, weight="bold", color=INK, pad=10)
-        ax.grid(axis="x")
-        ax.set_axisbelow(True)
-        ax.spines["left"].set_visible(False)
-        ax.xaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
-        ax.set_xlabel("Applications in 2025")
-    axes[0].set_xlim(0, top.apps_2025.max() * 1.15)
-    fig.legend(handles=[Patch(color=BLUE, label="Grew since 2023"),
-                        Patch(color=RED, label="Shrank since 2023")],
-               loc="upper left", bbox_to_anchor=(0.04, 0.805), ncol=2)
-    save(fig, "01_demand")
 
 
 # ---- 2. competition ------------------------------------------------------------
@@ -416,7 +375,6 @@ def main(argv=None):
                         help="redraw from charts/data/*.csv instead of querying BigQuery")
     args = parser.parse_args(argv)
     d = fetch(args.from_csv)
-    chart_demand(d["demand"])
     chart_competition(d["competition"], d["lender_names"])
     chart_approval(d["approval"])
     chart_correlation(d["correlation_points"])

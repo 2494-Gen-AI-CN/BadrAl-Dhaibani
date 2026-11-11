@@ -1,9 +1,9 @@
-"""Draw P0 charts 2 to 5 from the hmda_dw warehouse.
+"""Draw the P0 correlation (4) and approval gap (5) charts from the hmda_dw warehouse.
 
     PYTHONPATH=src python charts/make_charts.py             # query BigQuery, save CSVs and PNGs
     PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw from the saved CSVs
 
-The Q1 demand chart is drawn separately by charts/q1_demand.py.
+The Q1, Q2, Q3 and Q7 charts each have their own script (charts/q*.py).
 
 Each chart's data is saved as charts/data/<name>.csv, the table view of the
 chart, and every title is written from the numbers, so a rebuild on new data
@@ -11,6 +11,7 @@ keeps the titles true. All charts count site-built homes only, like the
 queries in sql/.
 """
 import argparse
+import logging
 import textwrap
 from pathlib import Path
 
@@ -21,22 +22,27 @@ import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.ticker import FuncFormatter, PercentFormatter  # noqa: E402
 
+# Matplotlib warns once per text for each missing font in font.family, even when a later
+# one is used. DejaVu Sans ships with Matplotlib, so a font is always found.
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
+
 ROOT = Path(__file__).resolve().parents[1]
 SQL = ROOT / "sql"
 OUT = ROOT / "charts"
 DATA = OUT / "data"
 
-# ---- palette (validated: categorical slots 1-3) ----
+# ---- palette (validated: categorical slots 1-2) ----
 SURFACE, INK, INK_2, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#898781"
 GRID, AXIS = "#e1e0d9", "#c3c2b7"
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+BLUE, ORANGE = "#2a78d6", "#eb6834"
 STATE_COLOR = {"Ohio": BLUE, "North Carolina": ORANGE}
 STATE_ABBR = {"Ohio": "OH", "North Carolina": "NC"}
 
 SOURCE = "Source: FFIEC HMDA public data, home-purchase applications on site-built homes."
 
 plt.rcParams.update({
-    "font.family": ["Liberation Sans", "DejaVu Sans"],
+    # Liberation Sans has Arial's letter widths, so the layout holds where Arial is missing (Linux).
+    "font.family": ["Arial", "Liberation Sans", "DejaVu Sans"],
     "font.size": 12,
     "figure.facecolor": SURFACE,
     "axes.facecolor": SURFACE,
@@ -64,13 +70,6 @@ DPI = 200
 
 # ---- queries -----------------------------------------------------------------
 
-LENDER_NAMES_SQL = """
-SELECT lei, lender_name, EXTRACT(YEAR FROM effective_from) AS from_year
-FROM hmda_dw.dim_lender
-WHERE name_in_filers
-ORDER BY lei, from_year
-"""
-
 # The county points behind sql/06_correlation.sql, which reports only r.
 CORRELATION_POINTS_SQL = """
 SELECT g.state_name AS state, g.county_name,
@@ -88,9 +87,6 @@ ORDER BY 1, 2
 """
 
 QUERIES = {
-    "competition":(SQL / "02_competition.sql").read_text,
-    "lender_names": lambda: LENDER_NAMES_SQL,
-    "approval": (SQL / "03_approval.sql").read_text,
     "correlation_points": lambda: CORRELATION_POINTS_SQL,
     "risk": (SQL / "05_risk.sql").read_text,
 }
@@ -142,147 +138,6 @@ def county_label(county_name, state):
 
 def num(value, digits=2):
     return f"{value:.{digits}f}".replace("-", "\u2212")
-
-
-LEGAL_SUFFIXES = [", NATIONAL ASSOCIATION", ", L.L.C.", ", LLC", ", INC.", ", LTD.", " INC.",
-                  " CORP.", " LLC"]
-KEEP_UPPER = {"DHI", "NFM", "USAA", "PNC", "TD", "BMO", "MRC"}
-MIXED_CASE = {"CROSSCOUNTRY": "CrossCountry", "JPMORGAN": "JPMorgan"}
-
-
-def lender_label(name):
-    """Readable lender name: legal suffix dropped, title case, known acronyms kept."""
-    for suffix in LEGAL_SUFFIXES:
-        if name.endswith(suffix):
-            name = name[: -len(suffix)]
-            break
-    words = []
-    for word in name.split():
-        if word in KEEP_UPPER:
-            words.append(word)
-        elif word in MIXED_CASE:
-            words.append(MIXED_CASE[word])
-        else:
-            words.append(word.capitalize() if word != "OF" else "of")
-    return " ".join(words)
-
-
-FULL_SUFFIX_CASE = {"Llc": "LLC", "L.l.c.": "L.L.C.", "Llc.": "LLC."}
-
-
-def full_name_label(name):
-    """Name as filed, in title case, legal suffix kept."""
-    words = []
-    for word in name.split():
-        bare = word.rstrip(",")
-        tail = word[len(bare):]
-        if bare in KEEP_UPPER:
-            cased = bare
-        elif bare in MIXED_CASE:
-            cased = MIXED_CASE[bare]
-        else:
-            cased = FULL_SUFFIX_CASE.get(bare.capitalize(), bare.capitalize())
-        words.append(cased + tail)
-    return " ".join(words)
-
-
-# ---- 2. competition ------------------------------------------------------------
-
-def name_history(lender_names):
-    """lei -> list of (from_year, name) when the lender filed under more than one name."""
-    history = {}
-    for lei, rows in lender_names.groupby("lei"):
-        names = rows.drop_duplicates("lender_name")
-        if len(names) > 1:
-            history[lei] = list(zip(names.from_year, names.lender_name))
-    return history
-
-
-MARKERS = ["*", "\u2020", "\u2021"]
-
-
-def chart_competition(competition, lender_names):
-    year = int(competition.activity_year.max())
-    latest = competition[competition.activity_year == year]
-    history = name_history(lender_names)
-    top5 = {s: latest[latest.state == s].nlargest(5, "apps").market_share_pct.sum()
-            for s in STATE_COLOR}
-    biggest = latest.market_share_pct.max()
-    title = f"No lender holds more than {biggest:.0f}% of either state's market"
-    subtitle = (f"Share of {year} home-purchase applications, ten largest lenders per state. "
-                f"The five largest take {top5['Ohio']:.0f}% in Ohio and "
-                f"{top5['North Carolina']:.0f}% in North Carolina. "
-                f"Names are as each lender filed them that year.")
-    # A lender shown under a different name than it used in an earlier year gets a
-    # marker, explained in the footnote: the type 2 lender history at work.
-    notes = {}
-    for _, row in latest.iterrows():
-        earlier = [(yr, n) for yr, n in history.get(row.lei, [])
-                   if yr < year and lender_label(n) != lender_label(row.name_that_year)]
-        if earlier and row.lei not in notes:
-            yr, n = earlier[0]
-            notes[row.lei] = (MARKERS[len(notes)],
-                              f"filed as {full_name_label(n)} in {yr}; same lender (LEI)")
-    footnote = SOURCE + "".join(f"  {m} {lender_label(latest.loc[latest.lei == lei].name_that_year.iloc[0])}: {text}."
-                                for lei, (m, text) in notes.items())
-    fig = new_figure(title, subtitle, footnote, top=0.72)
-    axes = fig.subplots(1, 2, sharex=True)
-    fig.subplots_adjust(wspace=0.62, left=0.2)
-    for ax, state in zip(axes, ["Ohio", "North Carolina"]):
-        rows = latest[latest.state == state].sort_values("apps").reset_index(drop=True)
-        labels = [lender_label(n) + (f" {notes[lei][0]}" if lei in notes else "")
-                  for n, lei in zip(rows.name_that_year, rows.lei)]
-        ax.barh(labels, rows.market_share_pct, color=BLUE, height=0.68)
-        for y, row in rows.iterrows():
-            ax.text(row.market_share_pct, y, f"  {row.market_share_pct:.1f}%", va="center",
-                    size=11, color=INK_2)
-        ax.set_title(state, loc="left", size=14, weight="bold", color=INK, pad=10)
-        ax.grid(axis="x")
-        ax.set_axisbelow(True)
-        ax.spines["left"].set_visible(False)
-        ax.xaxis.set_major_formatter(PercentFormatter(decimals=0))
-        ax.set_xlabel(f"Share of {year} applications")
-    axes[0].set_xlim(0, biggest * 1.25)
-    save(fig, "02_competition")
-
-
-# ---- 3. denials by debt-to-income ----------------------------------------------
-
-DTI_ORDER = ["<20%", "20%-<30%", "30%-<36%", "36%-<43%", "43%-<50%", "50%-60%", ">60%"]
-LOAN_TYPES = [("Conventional", BLUE), ("FHA", ORANGE), ("VA", AQUA)]
-
-
-def chart_approval(approval):
-    rate = approval.pivot(index="dti_band", columns="loan_type_label", values="denial_rate_pct")
-    conv_before, conv_after = rate.loc["43%-<50%", "Conventional"], rate.loc["50%-60%", "Conventional"]
-    fha_at = rate.loc["50%-60%", "FHA"]
-    usda = int(approval.loc[approval.loan_type_label == "USDA", "decided"].sum())
-    title = (f"Conventional denials jump from {conv_before:.0f}% to {conv_after:.0f}% "
-             f"once debt passes 50% of income")
-    subtitle = (f"Share of decided applications denied, 2023 to 2025. FHA denials stay at "
-                f"{fha_at:.0f}% up to 60% of income; above 60%, every loan type is mostly "
-                f"turned down.")
-    footnote = (f"{SOURCE} Left out: USDA loans ({usda:,} decided; too few at high debt) and "
-                f"applications with no ratio reported.")
-    fig = new_figure(title, subtitle, footnote)
-    ax = fig.subplots()
-    fig.subplots_adjust(left=0.075, right=0.88)
-    x = range(len(DTI_ORDER))
-    for loan_type, color in LOAN_TYPES:
-        y = rate.loc[DTI_ORDER, loan_type]
-        ax.plot(x, y, color=color, linewidth=2.2, marker="o", markersize=8,
-                markeredgecolor=SURFACE, markeredgewidth=1.5, label=loan_type, zorder=3)
-        ax.annotate(loan_type, (len(DTI_ORDER) - 1, y.iloc[-1]), xytext=(12, 0),
-                    textcoords="offset points", va="center", size=12, color=INK, weight="bold")
-    ax.set_xticks(list(x), [b.replace("-<", " to <").replace("-", " to ") for b in DTI_ORDER])
-    ax.set_xlabel("Debt-to-income ratio")
-    ax.set_ylabel("Share of decided applications denied")
-    ax.set_ylim(0, 100)
-    ax.yaxis.set_major_formatter(PercentFormatter(decimals=0))
-    ax.grid(axis="y")
-    ax.set_axisbelow(True)
-    ax.legend(loc="upper left")
-    save(fig, "03_denials_by_dti")
 
 
 # ---- 4. correlation ------------------------------------------------------------
@@ -375,8 +230,6 @@ def main(argv=None):
                         help="redraw from charts/data/*.csv instead of querying BigQuery")
     args = parser.parse_args(argv)
     d = fetch(args.from_csv)
-    chart_competition(d["competition"], d["lender_names"])
-    chart_approval(d["approval"])
     chart_correlation(d["correlation_points"])
     chart_risk(d["risk"])
 

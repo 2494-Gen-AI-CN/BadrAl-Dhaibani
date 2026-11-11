@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from google.cloud import bigquery
 from hmda.config import load_config
@@ -7,6 +8,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.ticker import PercentFormatter
+
+# Matplotlib warns once per text for each missing font in font.family, even when a later
+# one is used. DejaVu Sans ships with Matplotlib, so a font is always found.
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -40,7 +45,8 @@ PRODUCTS = ['Conventional', 'FHA', 'VA']    # top to bottom
 HIGHLIGHT = 'VA'
 
 plt.rcParams.update({
-    'font.family': ['Arial', 'DejaVu Sans'],
+    # Liberation Sans has Arial's letter widths, so the layout holds where Arial is missing (Linux).
+    'font.family': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
     'font.size': 12,
     'figure.facecolor': SURFACE,
     'axes.facecolor': SURFACE,

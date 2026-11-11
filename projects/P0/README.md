@@ -123,8 +123,8 @@ bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
 
 ```bash
 PYTHONPATH=src python charts/q1_demand.py               # likewise q2_competition, q3_approval, q7_demand_map
-PYTHONPATH=src python charts/make_charts.py             # the other charts: query the warehouse, save CSVs and PNGs
-PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw the other charts from the saved CSVs, no BigQuery
+PYTHONPATH=src python charts/make_charts.py             # charts 4 and 5: query the warehouse, save CSVs and PNGs
+PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw charts 4 and 5 from the saved CSVs, no BigQuery
 ```
 
 The PNGs land in `charts/`, and the data behind each one in `charts/data/` (see [Charts](#charts)).
@@ -279,14 +279,13 @@ Even a strong r would not show cause. HMDA has no credit scores, house prices pu
 
 Each chart script pulls its data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
 
-Each `q*.png` chart has a script of the same name in `charts/`. Their titles are written by hand, so re-check them against the chart's CSV if the data changes. `charts/make_charts.py` draws the rest and writes their titles from the numbers.
+Each `q*.png` chart has a script of the same name in `charts/`. Their titles are written by hand, so re-check them against the chart's CSV if the data changes. `charts/make_charts.py` draws charts 4 and 5 and writes their titles from the numbers.
 
 | File | Shows | Data |
 | --- | --- | --- |
 | `q1_demand.png` | Applications in 2023, 2024 and 2025 for the ten largest counties per state, with growth since 2023 | `01_demand.sql` |
 | `q2_competition.png` | Each state's applications by year, split into the largest lender, the next nine and all others | `02_competition.sql`, `dim_lender` |
 | `q3_approval.png` | Ohio against North Carolina for conventional, FHA and VA loans: each product's share of applications and its denial rate, with VA highlighted | `03_approval.sql` |
-| `03_denials_by_dti.png` | Denial rate by debt-to-income band for conventional, FHA and VA loans, both states combined | `charts/data/approval.csv`, from the earlier version of `03_approval.sql` |
 | `04_correlation.png` | One dot per county: median loan-to-income against denial rate, with r for each state | the county points behind `06_correlation.sql` |
 | `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
 | `q7_demand_map.png` | County map of both states at the same scale, shaded by 2025 applications, with each state's five largest counties named (GeoPandas) | `07_demand_map.sql`, Census county shapes |

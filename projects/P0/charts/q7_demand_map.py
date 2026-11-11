@@ -3,6 +3,7 @@
 County shapes: Census cartographic boundary file cb_2023_us_county_20m.zip in data/raw/
 (scripts/download.sh fetches it). GeoPandas reads the zip directly.
 """
+import logging
 from pathlib import Path
 from google.cloud import bigquery
 from hmda.config import load_config
@@ -16,6 +17,10 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap, to_hex
 from matplotlib.patches import Patch
 
+# Matplotlib warns once per text for each missing font in font.family, even when a later
+# one is used. DejaVu Sans ships with Matplotlib, so a font is always found.
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # Same palette and look as q1_demand.py, so the deck matches.
@@ -23,7 +28,8 @@ SURFACE, INK, INK_2, MUTED = '#fcfcfb', '#0b0b0b', '#52514e', '#898781'
 AXIS = '#c3c2b7'
 
 plt.rcParams.update({
-    'font.family': ['Arial', 'DejaVu Sans'],
+    # Liberation Sans has Arial's letter widths, so the layout holds where Arial is missing (Linux).
+    'font.family': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
     'font.size': 12,
     'figure.facecolor': SURFACE,
     'axes.facecolor': SURFACE,
@@ -32,8 +38,7 @@ plt.rcParams.update({
     'legend.fontsize': 11,
 })
 
-# What the map shades. Change these three to reuse the map for another county measure
-# (e.g. the opportunity score at the scorecard stage).
+# What the map shades. Change these three to map another county measure.
 VALUE = 'apps_2025'
 BINS = [0, 500, 1000, 2500, 5000, float('inf')]          # class edges: [low, high)
 BIN_LABELS = ['Under 500', '500–1k', '1k–2.5k', '2.5k–5k', '5k+']

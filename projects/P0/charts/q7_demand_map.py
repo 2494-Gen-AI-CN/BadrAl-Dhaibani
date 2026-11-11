@@ -46,12 +46,14 @@ BIN_LABELS = ['Under 500', '500–1k', '1k–2.5k', '2.5k–5k', '5k+']
 # Each state keeps its deck colour: a light-to-dark ramp through it, one step per class.
 STATES = [('39', 'Ohio', '#1e5aa8'), ('37', 'North Carolina', '#eb6834')]
 N_LABELS = 5   # name each state's five largest counties on the map
-# Neighbouring big counties whose labels would collide: move the label by (x, y) points
-# and draw a thin leader line back to the county. Others are labelled in place.
+# Move a label by (x, y) points, with a thin leader line back to its county, when it would
+# collide with a neighbour or sit on a dark fill (text on the darkest class is hard to read).
+# Others are labelled in place.
 LABEL_OFFSETS = {
-    'Ohio': {'Cuyahoga': (-20, 42), 'Summit': (80, 30)},
+    'Ohio': {'Cuyahoga': (-20, 42), 'Summit': (80, 30),
+             'Hamilton': (20, -48), 'Montgomery': (-62, 34), 'Franklin': (-50, 42)},
     'North Carolina': {'Forsyth': (-40, 55), 'Guilford': (25, 70), 'Wake': (50, 75),
-                       'Johnston': (60, -40)},
+                       'Johnston': (60, -40), 'Mecklenburg': (-30, -48)},
 }
 
 
@@ -130,7 +132,7 @@ for group, (fips, state, base), b, w, h in zip(groups, STATES, bounds, widths, h
         ax.annotate(f"{row.NAME}\n{row[VALUE]:,.0f}", (point.x, point.y),
                     xytext=(dx, dy), textcoords='offset points', ha='center', va='center',
                     size=10, color=INK, linespacing=1.1, annotation_clip=False,
-                    path_effects=[pe.withStroke(linewidth=3, foreground=SURFACE)],
+                    path_effects=[pe.withStroke(linewidth=4, foreground=SURFACE)],
                     arrowprops=dict(arrowstyle='-', color=INK_2, linewidth=0.8, shrinkA=8, shrinkB=0)
                     if (dx, dy) != (0, 0) else None)
 

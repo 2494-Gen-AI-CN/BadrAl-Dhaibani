@@ -46,12 +46,15 @@ BIN_LABELS = ['Under 500', '500–1k', '1k–2.5k', '2.5k–5k', '5k+']
 # Each state keeps its deck colour: a light-to-dark ramp through it, one step per class.
 STATES = [('39', 'Ohio', '#1e5aa8'), ('37', 'North Carolina', '#eb6834')]
 N_LABELS = 5   # name each state's five largest counties on the map
+# Also name these: counties in the recommended five-county start that aren't in the top five.
+EXTRA_LABELS = {'Ohio': ['Butler', 'Warren']}
 # Move a label by (x, y) points, with a thin leader line back to its county, when it would
 # collide with a neighbour or sit on a dark fill (text on the darkest class is hard to read).
 # Others are labelled in place.
 LABEL_OFFSETS = {
     'Ohio': {'Cuyahoga': (-20, 42), 'Summit': (80, 30),
-             'Hamilton': (20, -48), 'Montgomery': (-62, 34), 'Franklin': (-50, 42)},
+             'Hamilton': (20, -48), 'Montgomery': (-62, 34), 'Franklin': (-50, 42),
+             'Butler': (-52, -8), 'Warren': (60, -48)},
     'North Carolina': {'Forsyth': (-40, 55), 'Guilford': (25, 70), 'Wake': (50, 75),
                        'Johnston': (60, -40), 'Mecklenburg': (-30, -48)},
 }
@@ -124,9 +127,11 @@ for group, (fips, state, base), b, w, h in zip(groups, STATES, bounds, widths, h
     ax.set_axis_off()
     ax.set_title(state, loc='left', size=14, weight='bold', color=INK, pad=10)
 
-    # Name the largest counties, with a halo so the text reads on dark fills.
+    # Name the largest counties (plus any extras), with a halo so the text reads on dark fills.
     offsets = LABEL_OFFSETS.get(state, {})
-    for _, row in group.nlargest(N_LABELS, VALUE).iterrows():
+    extras = group[group.NAME.isin(EXTRA_LABELS.get(state, []))]
+    labelled = pd.concat([group.nlargest(N_LABELS, VALUE), extras]).drop_duplicates('GEOID')
+    for _, row in labelled.iterrows():
         point = row.geometry.representative_point()
         dx, dy = offsets.get(row.NAME, (0, 0))
         ax.annotate(f"{row.NAME}\n{row[VALUE]:,.0f}", (point.x, point.y),

@@ -1,0 +1,84 @@
+state,county_name,originations,median_rate_spread,median_interest_rate,active_lenders,state_median_spread
+Ohio,Ashtabula County,358,0.455,6.75,71,0.226
+Ohio,Richland County,729,0.394,6.625,79,0.226
+Ohio,Trumbull County,1001,0.39,6.69,95,0.226
+Ohio,Marion County,325,0.368,6.625,69,0.226
+Ohio,Ashland County,317,0.35,6.625,53,0.226
+Ohio,Muskingum County,429,0.346,6.75,74,0.226
+Ohio,Clark County,762,0.344,6.625,101,0.226
+Ohio,Columbiana County,430,0.344,6.737,70,0.226
+Ohio,Stark County,2371,0.338,6.625,142,0.226
+Ohio,Wayne County,529,0.334,6.625,85,0.226
+Ohio,Lucas County,2322,0.334,6.625,143,0.226
+Ohio,Knox County,448,0.307,6.75,79,0.226
+Ohio,Mahoning County,1329,0.301,6.625,114,0.226
+Ohio,Wood County,847,0.282,6.625,98,0.226
+Ohio,Allen County,556,0.275,6.625,61,0.226
+Ohio,Hancock County,464,0.266,6.625,58,0.226
+Ohio,Erie County,404,0.265,6.625,82,0.226
+Ohio,Lake County,1921,0.26,6.625,131,0.226
+Ohio,Summit County,4071,0.253,6.625,206,0.226
+Ohio,Portage County,987,0.249,6.625,113,0.226
+Ohio,Sandusky County,319,0.249,6.625,52,0.226
+Ohio,Fairfield County,1214,0.233,6.625,135,0.226
+Ohio,Montgomery County,3572,0.224,6.625,193,0.226
+Ohio,Geauga County,640,0.223,6.625,101,0.226
+Ohio,Licking County,1364,0.222,6.625,142,0.226
+Ohio,Butler County,2791,0.221,6.625,188,0.226
+Ohio,Cuyahoga County,7625,0.206,6.599,247,0.226
+North Carolina,Cumberland County,689,0.202,6.5,141,0.041
+Ohio,Miami County,822,0.199,6.625,108,0.226
+Ohio,Medina County,1566,0.19,6.625,145,0.226
+Ohio,Hamilton County,6118,0.183,6.625,234,0.226
+Ohio,Franklin County,9033,0.181,6.607,283,0.226
+North Carolina,Davidson County,1111,0.175,6.5,139,0.041
+Ohio,Lorain County,2642,0.17,6.625,170,0.226
+Ohio,Clermont County,1898,0.169,6.625,163,0.226
+North Carolina,Onslow County,541,0.155,6.5,108,0.041
+Ohio,Pickaway County,452,0.149,6.5,87,0.226
+North Carolina,Randolph County,763,0.146,6.5,114,0.041
+Ohio,Greene County,1233,0.14,6.5,132,0.226
+North Carolina,Rowan County,970,0.134,6.5,144,0.041
+North Carolina,Forsyth County,2949,0.13,6.5,224,0.041
+Ohio,Madison County,341,0.125,6.5,64,0.226
+North Carolina,Nash County,424,0.121,6.49,98,0.041
+Ohio,Warren County,2473,0.118,6.5,184,0.226
+North Carolina,Gaston County,1968,0.118,6.5,196,0.041
+North Carolina,Caldwell County,398,0.115,6.49,74,0.041
+North Carolina,Wilson County,387,0.111,6.5,89,0.041
+North Carolina,Haywood County,424,0.108,6.375,80,0.041
+North Carolina,Craven County,577,0.104,6.49,101,0.041
+North Carolina,Guilford County,3275,0.095,6.5,232,0.041
+North Carolina,Cleveland County,448,0.093,6.437,99,0.041
+North Carolina,Davie County,337,0.092,6.375,87,0.041
+North Carolina,Granville County,347,0.087,6.5,107,0.041
+North Carolina,Cabarrus County,2113,0.086,6.5,198,0.041
+North Carolina,Brunswick County,2214,0.085,6.49,212,0.041
+North Carolina,Pender County,610,0.084,6.5,119,0.041
+North Carolina,Dare County,301,0.08,6.5,60,0.041
+North Carolina,New Hanover County,1896,0.076,6.5,182,0.041
+North Carolina,Moore County,713,0.075,6.49,130,0.041
+North Carolina,Buncombe County,1859,0.074,6.5,177,0.041
+North Carolina,Henderson County,974,0.066,6.492,131,0.041
+North Carolina,Burke County,406,0.066,6.375,77,0.041
+North Carolina,Lincoln County,815,0.063,6.5,141,0.041
+North Carolina,Lee County,387,0.06,6.5,101,0.041
+North Carolina,Stanly County,489,0.055,6.437,105,0.041
+North Carolina,Rockingham County,527,0.055,6.375,91,0.041
+North Carolina,Union County,2630,0.052,6.49,243,0.041
+North Carolina,Iredell County,1962,0.049,6.437,214,0.041
+North Carolina,Pitt County,1041,0.038,6.375,121,0.041
+North Carolina,Mecklenburg County,10461,0.032,6.49,373,0.041
+North Carolina,Catawba County,1313,0.029,6.375,152,0.041
+Ohio,Delaware County,2663,0.024,6.49,190,0.226
+North Carolina,Wayne County,403,0.021,6.49,90,0.041
+North Carolina,Alamance County,1367,0.017,6.375,148,0.041
+North Carolina,Franklin County,733,0.016,6.49,145,0.041
+North Carolina,Carteret County,485,0.009,6.45,94,0.041
+North Carolina,Harnett County,1131,-0.01,6.375,153,0.041
+North Carolina,Johnston County,2269,-0.021,6.375,211,0.041
+North Carolina,Chatham County,777,-0.03,6.375,135,0.041
+North Carolina,Durham County,2967,-0.033,6.375,229,0.041
+Ohio,Union County,1050,-0.034,6.375,111,0.226
+North Carolina,Orange County,969,-0.04,6.375,143,0.041
+North Carolina,Wake County,11790,-0.061,6.375,364,0.041

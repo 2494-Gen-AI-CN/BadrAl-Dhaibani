@@ -122,7 +122,7 @@ bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
 **6. Draw the charts**
 
 ```bash
-PYTHONPATH=src python charts/q1_demand.py               # likewise q2_competition, q3_approval, q7_demand_map
+PYTHONPATH=src python charts/q1_demand.py               # likewise q2_competition, q3_approval, q3_denials_by_dti, q4_pricing, q7_demand_map
 PYTHONPATH=src python charts/make_charts.py             # charts 4 and 5: query the warehouse, save CSVs and PNGs
 PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw charts 4 and 5 from the saved CSVs, no BigQuery
 ```
@@ -255,7 +255,8 @@ One file per client question in `sql/`, each opening with the question and what 
 | `01_demand.sql` | Which counties have the most applications, and where are they growing fastest (2023 to 2025)? |
 | `02_competition.sql` | How concentrated is each state (leader share, top-10 share, HHI), and who are the largest lenders, under the name they filed under that year (uses the lender history)? |
 | `03_approval.sql` | For each state and loan type: share of the state's applications, denial rate and top denial reason (2023 to 2025 combined) |
-| `04_pricing.sql` | Median rate spread on 2025 conventional originations by county, with the number of active lenders |
+| `03b_approval_dti.sql` | Denial rate by debt-to-income band for each loan type, both states, 2023 to 2025 combined |
+| `04_pricing.sql` | Exact median rate spread on 2025 conventional originations by county, with the number of active lenders and the state's median |
 | `05_risk.sql` | Approval gap between Upper and Low/Moderate-income tracts by county, 2025 |
 | `06_correlation.sql` | Correlation between county median loan-to-income and denial rate, 2025 |
 | `07_demand_map.sql` | 2025 applications for every county in both states, for the county map |
@@ -286,8 +287,10 @@ Each `q*.png` chart has a script of the same name in `charts/`. Their titles are
 | `q1_demand.png` | Applications in 2023, 2024 and 2025 for the ten largest counties per state, with growth since 2023 | `01_demand.sql` |
 | `q2_competition.png` | Each state's applications by year, split into the largest lender, the next nine and all others | `02_competition.sql`, `dim_lender` |
 | `q3_approval.png` | Ohio against North Carolina for conventional, FHA and VA loans: each product's share of applications and its denial rate, with VA highlighted | `03_approval.sql` |
+| `q3_denials_by_dti.png` | Denial rate by debt-to-income band, one line each for conventional, FHA and VA | `03b_approval_dti.sql` |
+| `q4_pricing.png` | One dot per county: median rate spread on conventional loans, one row per state, with each state's median and the recommended counties drawn darker | `04_pricing.sql` |
 | `04_correlation.png` | One dot per county: median loan-to-income against denial rate, with r for each state | the county points behind `06_correlation.sql` |
 | `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
-| `q7_demand_map.png` | County map of both states at the same scale, shaded by 2025 applications, with each state's five largest counties named (GeoPandas) | `07_demand_map.sql`, Census county shapes |
+| `q7_demand_map.png` | County map of both states at the same scale, shaded by 2025 applications, with each state's five largest counties named, plus Butler and Warren to complete the recommended five (GeoPandas) | `07_demand_map.sql`, Census county shapes |
 
 Colours come from a palette checked for colour-blind readers. Lines and dots are also labelled directly, so no chart depends on colour alone.

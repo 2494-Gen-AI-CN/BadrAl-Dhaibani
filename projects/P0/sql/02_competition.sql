@@ -42,7 +42,7 @@ WITH share AS (
   GROUP BY g.state, f.activity_year, l.lei, l.lender_name, l.size_tier, l.name_in_filers
 ),
 concentration AS (
-  SELECT 
+  SELECT
     state,
     activity_year,
     COUNT(lei) as lenders,

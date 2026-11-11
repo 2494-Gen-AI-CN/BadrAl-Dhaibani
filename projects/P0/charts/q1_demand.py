@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from google.cloud import bigquery
 from hmda.config import load_config
@@ -8,6 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 from matplotlib.ticker import StrMethodFormatter
+
+# Matplotlib warns once per text for each missing font in font.family, even when a later
+# one is used. DejaVu Sans ships with Matplotlib, so a font is always found.
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,7 +25,8 @@ YEAR_COLOR = {2023: '#a5c4ea', 2024: '#5d97dd', 2025: '#1e5aa8'}
 UP, DOWN = '#137a52', '#c4302f'
 
 plt.rcParams.update({
-    'font.family': ['Arial', 'DejaVu Sans'],
+    # Liberation Sans has Arial's letter widths, so the layout holds where Arial is missing (Linux).
+    'font.family': ['Arial', 'Liberation Sans', 'DejaVu Sans'],
     'font.size': 12,
     'figure.facecolor': SURFACE,
     'axes.facecolor': SURFACE,

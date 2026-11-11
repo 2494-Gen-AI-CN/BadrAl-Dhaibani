@@ -1,5 +1,9 @@
 # P0 — Mortgage Market Entry: HMDA Data Warehouse
 
+## Team
+
+Tristan Nguyen and Badr Al-Dhaibani. Tristan's repo: [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).
+
 ## Business Case
 **Lakeshore Bank USA** is the US arm of a fictional Canadian bank. It writes home-purchase mortgages in New York today, and its board has approved a push into one new state in 2027. The two candidates are **Ohio** and **North Carolina**.
 
@@ -44,6 +48,7 @@ What remains describes the neighbourhood's income and size, not the person or th
 ## Dataset
 
 Public loan-level mortgage data published under the Home Mortgage Disclosure Act (HMDA), from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) ([API documentation](https://ffiec.cfpb.gov/documentation/api/data-browser/)). No key is needed.
+
 | Source | Format | Files | Becomes |
 | --- | --- | --- | --- |
 | Loan application register (LAR) | CSV, 99 columns | one per state and year: Ohio and North Carolina, 2023 to 2025 | `stg_lar` |
@@ -118,8 +123,8 @@ bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
 
 ```bash
 PYTHONPATH=src python charts/q1_demand.py               # likewise q2_competition, q3_approval, q7_demand_map
-PYTHONPATH=src python charts/make_charts.py             # query the warehouse, save CSVs and PNGs
-PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw from the saved CSVs, no BigQuery
+PYTHONPATH=src python charts/make_charts.py             # the other charts: query the warehouse, save CSVs and PNGs
+PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw the other charts from the saved CSVs, no BigQuery
 ```
 
 The PNGs land in `charts/`, and the data behind each one in `charts/data/` (see [Charts](#charts)).
@@ -149,6 +154,8 @@ Every run appends one row per source file to `load_log`:
 | `status`, `error` | `loaded`, `skipped` or `failed`, and the error message for a failed file |
 
 **Running the job twice adds no data.** A file whose fingerprint matches its last successful load is skipped. The second run still appends one `skipped` row per file to `load_log`, as an audit trail, but staging is unchanged. A failed file is retried on the next run.
+
+`sql/00_load_log.sql` sums the latest successful load of each loan file. Its TOTAL row gives 2,919,828 rows read, 1,010,939 in scope, 14,542 rejected and 996,397 loaded.
 
 The skip check looks only at the file's contents. After changing the code or `config.yaml`, run with `--force` so every file is reloaded under the new rules.
 
@@ -270,7 +277,9 @@ Even a strong r would not show cause. HMDA has no credit scores, house prices pu
 
 ## Charts
 
-Each chart pulls its data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. The `q*.png` charts each have a script of the same name in `charts/`; `charts/make_charts.py` draws the rest. Titles state the finding and are checked against the numbers. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
+Each chart script pulls its data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
+
+Each `q*.png` chart has a script of the same name in `charts/`. Their titles are written by hand, so re-check them against the chart's CSV if the data changes. `charts/make_charts.py` draws the rest and writes their titles from the numbers.
 
 | File | Shows | Data |
 | --- | --- | --- |
@@ -283,7 +292,3 @@ Each chart pulls its data from the warehouse with the BigQuery Python client and
 | `q7_demand_map.png` | County map of both states at the same scale, shaded by 2025 applications, with each state's five largest counties named (GeoPandas) | `07_demand_map.sql`, Census county shapes |
 
 Colours come from a palette checked for colour-blind readers. Lines and dots are also labelled directly, so no chart depends on colour alone.
-
-## Team
-
-Tristan Nguyen and Badr Al-Dhaibani. Tristan's repo: [2494-Gen-AI-CN/TristanNguyen](https://github.com/2494-Gen-AI-CN/TristanNguyen).

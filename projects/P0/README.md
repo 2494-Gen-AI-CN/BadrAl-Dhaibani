@@ -245,7 +245,7 @@ One file per client question in `sql/`, each opening with the question and what 
 | --- | --- |
 | `01_demand.sql` | Which counties have the most applications, and where are they growing fastest (2023 to 2025)? |
 | `02_competition.sql` | Which lenders hold each state, under the name they filed under that year (uses the lender history)? |
-| `03_approval.sql` | Denial rate and top denial reason by loan type and debt-to-income band |
+| `03_approval.sql` | For each state and loan type: share of the state's applications, denial rate and top denial reason (2023 to 2025 combined) |
 | `04_pricing.sql` | Median rate spread on 2025 conventional originations by county, with the number of active lenders |
 | `05_risk.sql` | Approval gap between Upper and Low/Moderate-income tracts by county, 2025 |
 | `06_correlation.sql` | Correlation between county median loan-to-income and denial rate, 2025 |
@@ -273,7 +273,8 @@ Even a strong r would not show cause. HMDA has no credit scores, house prices pu
 | --- | --- | --- |
 | `01_demand.png` | 2025 applications in the ten largest counties per state, coloured by growth or decline since 2023 | `01_demand.sql` |
 | `02_competition.png` | 2025 market share of the ten largest lenders per state, under the name each filed under that year, with name changes footnoted | `02_competition.sql`, `dim_lender` |
-| `03_denials_by_dti.png` | Denial rate by debt-to-income band for conventional, FHA and VA loans | `03_approval.sql` |
+| `q3_approval.png` | Ohio against North Carolina for conventional, FHA and VA loans: each product's share of applications and its denial rate, with VA highlighted. Drawn by `charts/q3_approval.py` | `03_approval.sql` |
+| `03_denials_by_dti.png` | Denial rate by debt-to-income band for conventional, FHA and VA loans, both states combined | `charts/data/approval.csv`, from the earlier version of `03_approval.sql` |
 | `04_correlation.png` | One dot per county: median loan-to-income against denial rate, with r for each state | the county points behind `06_correlation.sql` |
 | `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
 

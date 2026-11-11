@@ -1,0 +1,9 @@
+state,loan_type_label,apps,product_share_pct,decided,denied,denial_rate_pct,top_denial_reason,top_reason_share_pct
+NC,Conventional,310522,66.9,255245,18404,7.2,Debt-to-income ratio,45.0
+NC,FHA,76847,16.5,64075,7604,11.9,Debt-to-income ratio,47.5
+NC,VA,72521,15.6,58987,3698,6.3,Debt-to-income ratio,30.9
+NC,USDA,4515,1.0,3650,406,11.1,Debt-to-income ratio,40.4
+OH,Conventional,299569,70.4,247935,14870,6.0,Debt-to-income ratio,35.0
+OH,FHA,84174,19.8,68639,8195,11.9,Debt-to-income ratio,35.6
+OH,VA,35986,8.5,28454,2477,8.7,Debt-to-income ratio,28.6
+OH,USDA,5588,1.3,4589,429,9.3,Debt-to-income ratio,29.1

@@ -9,13 +9,15 @@ The Chief Lending Officer needs three things before choosing a state: where buye
 
 The answer comes from three years of public federal mortgage data (HMDA, 2023 to 2025), covering every home-purchase application made in both states.
 
-**The five questions**
+**The seven questions**
 
 1. **Demand:** Which counties have the most home-purchase applications, and where are they growing fastest?
 2. **Competition:** Which lenders hold each market, and how has the competitive field changed as lenders merged, renamed or switched regulators?
 3. **Approval:** Why are applications denied, and how does that differ by loan product (conventional, FHA, VA)?
 4. **Pricing:** Where are borrowers paying the most above the benchmark rate, signalling room for a competitive new entrant?
 5. **Risk:** Where do approval rates differ sharply between lower- and higher-income neighbourhoods, which Lakeshore would need to plan around?
+6. **Affordability:** Do counties where buyers borrow more against their income see more denials?
+7. **Geography:** Where are each state's home buyers concentrated, and how much of the market could five counties reach?
 
 **The deliverable** is a recommendation: which state to enter, the five counties to start in, and the loan products to lead with.
 
@@ -42,7 +44,6 @@ What remains describes the neighbourhood's income and size, not the person or th
 ## Dataset
 
 Public loan-level mortgage data published under the Home Mortgage Disclosure Act (HMDA), from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) ([API documentation](https://ffiec.cfpb.gov/documentation/api/data-browser/)). No key is needed.
-2
 | Source | Format | Files | Becomes |
 | --- | --- | --- | --- |
 | Loan application register (LAR) | CSV, 99 columns | one per state and year: Ohio and North Carolina, 2023 to 2025 | `stg_lar` |
@@ -79,7 +80,7 @@ Credentials come from your own gcloud login, never from a file in the repository
 
 **3. Download the raw files**
 
-The raw files are not in the repository. This script fetches the 12 HMDA files and the county reference into `data/raw/` (about 1.1 GB):
+The raw files are not in the repository. This script fetches the 12 HMDA files, the county reference and the county shapes for the map into `data/raw/` (about 1.1 GB):
 
 ```bash
 ./scripts/download.sh            # skips files that already exist
@@ -116,11 +117,12 @@ bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false < sql/01_demand.sql
 **6. Draw the charts**
 
 ```bash
+PYTHONPATH=src python charts/q1_demand.py               # likewise q2_competition, q3_approval, q7_demand_map
 PYTHONPATH=src python charts/make_charts.py             # query the warehouse, save CSVs and PNGs
 PYTHONPATH=src python charts/make_charts.py --from-csv  # redraw from the saved CSVs, no BigQuery
 ```
 
-The five PNGs land in `charts/`, and the data behind each one in `charts/data/` (see [Charts](#charts)).
+The PNGs land in `charts/`, and the data behind each one in `charts/data/` (see [Charts](#charts)).
 
 **7. Run the tests**
 
@@ -244,15 +246,16 @@ One file per client question in `sql/`, each opening with the question and what 
 | File | Question |
 | --- | --- |
 | `01_demand.sql` | Which counties have the most applications, and where are they growing fastest (2023 to 2025)? |
-| `02_competition.sql` | Which lenders hold each state, under the name they filed under that year (uses the lender history)? |
+| `02_competition.sql` | How concentrated is each state (leader share, top-10 share, HHI), and who are the largest lenders, under the name they filed under that year (uses the lender history)? |
 | `03_approval.sql` | For each state and loan type: share of the state's applications, denial rate and top denial reason (2023 to 2025 combined) |
 | `04_pricing.sql` | Median rate spread on 2025 conventional originations by county, with the number of active lenders |
 | `05_risk.sql` | Approval gap between Upper and Low/Moderate-income tracts by county, 2025 |
 | `06_correlation.sql` | Correlation between county median loan-to-income and denial rate, 2025 |
+| `07_demand_map.sql` | 2025 applications for every county in both states, for the county map |
 
 ### Manufactured homes
 
-All six queries count **site-built homes only**. Manufactured homes stay in the warehouse but are left out of the analysis, because they are a specialist market that Lakeshore would not enter and they distort every county comparison:
+All seven queries count **site-built homes only**. Manufactured homes stay in the warehouse but are left out of the analysis, because they are a specialist market that Lakeshore would not enter and they distort every county comparison:
 
 - In 2025 they were denied about 51% of the time, against 7 to 8% for site-built homes.
 - A county's share of manufactured homes tracks its denial rate almost exactly (r = 0.95 in North Carolina, 0.91 in Ohio).
@@ -267,16 +270,17 @@ Even a strong r would not show cause. HMDA has no credit scores, house prices pu
 
 ## Charts
 
-`charts/make_charts.py` pulls each chart's data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. Every title is written from the numbers, so it stays true if the data changes. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
+Each chart pulls its data from the warehouse with the BigQuery Python client and draws it with Matplotlib, as a 16:9 PNG for the deck. The `q*.png` charts each have a script of the same name in `charts/`; `charts/make_charts.py` draws the rest. Titles state the finding and are checked against the numbers. The data behind each chart is saved as a CSV in `charts/data/`, which doubles as a table version of the chart.
 
 | File | Shows | Data |
 | --- | --- | --- |
-| `01_demand.png` | 2025 applications in the ten largest counties per state, coloured by growth or decline since 2023 | `01_demand.sql` |
-| `02_competition.png` | 2025 market share of the ten largest lenders per state, under the name each filed under that year, with name changes footnoted | `02_competition.sql`, `dim_lender` |
-| `q3_approval.png` | Ohio against North Carolina for conventional, FHA and VA loans: each product's share of applications and its denial rate, with VA highlighted. Drawn by `charts/q3_approval.py` | `03_approval.sql` |
+| `q1_demand.png` | Applications in 2023, 2024 and 2025 for the ten largest counties per state, with growth since 2023 | `01_demand.sql` |
+| `q2_competition.png` | Each state's applications by year, split into the largest lender, the next nine and all others | `02_competition.sql`, `dim_lender` |
+| `q3_approval.png` | Ohio against North Carolina for conventional, FHA and VA loans: each product's share of applications and its denial rate, with VA highlighted | `03_approval.sql` |
 | `03_denials_by_dti.png` | Denial rate by debt-to-income band for conventional, FHA and VA loans, both states combined | `charts/data/approval.csv`, from the earlier version of `03_approval.sql` |
 | `04_correlation.png` | One dot per county: median loan-to-income against denial rate, with r for each state | the county points behind `06_correlation.sql` |
 | `05_approval_gap.png` | Approval rate in Low/Moderate against Upper-income tracts, for counties with a gap of 5 points or more | `05_risk.sql` |
+| `q7_demand_map.png` | County map of both states at the same scale, shaded by 2025 applications, with each state's five largest counties named (GeoPandas) | `07_demand_map.sql`, Census county shapes |
 
 Colours come from a palette checked for colour-blind readers. Lines and dots are also labelled directly, so no chart depends on colour alone.
 

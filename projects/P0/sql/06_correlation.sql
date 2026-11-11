@@ -1,5 +1,5 @@
--- Correlation: Do counties where buyers stretch further on income see more
---              denials?
+-- Q6 Affordability: Do counties where buyers stretch further on income see more
+--                   denials?
 -- Meaning:     stretched counties need tighter affordability checks, or
 --              products built for higher loan-to-income borrowers.
 -- One point per county (2025 decided applications on site-built homes,

@@ -88,18 +88,38 @@ def lender_label(name):
 
 # ---- chart --------------------------------------------------------------------
 
-# Hand-written takeaway for the Ohio vs North Carolina decision. Numbers checked against
-# charts/data/q2_competition.csv; re-check them if the data changes.
+# ---- numbers for the text (2025, from the query result) -----------------------
+latest = split[split.activity_year == 2025].set_index('state')
+
+# Top-10 share, rounded: the wording says "about X% in each state", so both must round alike.
+top10 = set(latest.top10_share.round())
+assert len(top10) == 1, top10
+top10 = top10.pop()
+
+# Smaller lenders outside the top ten, rounded down to the nearest 50 ("more than 650").
+others_floor = latest.other_lenders.min() // 50 * 50
+
+# HHI (sum of squared % shares). "About 200 in both states": both must round to 200.
+hhi = latest.hhi
+print('HHI 2025:', hhi.to_dict())
+hhi_rounded = set(hhi.round(-2))
+assert hhi_rounded == {200}, hhi_rounded
+hhi_rounded = hhi_rounded.pop()
+# A threshold from the 2023 US Merger Guidelines, not from the data.
+HIGHLY_CONCENTRATED = 1800
+
 title = 'Lender concentration is low and comparable in both states'
-subtitle = ('The ten largest lenders hold about 36% of applications in each state; '
-            'more than 650 smaller lenders hold the remainder.')
+subtitle = (f'The ten largest lenders hold about {top10:.0f}% of applications in each state; '
+            f'more than {others_floor:,} smaller lenders hold the remainder.\n'
+            f'Market concentration (HHI) is about {hhi_rounded:,.0f} in both states; '
+            f'US merger guidelines call a market highly concentrated above {HIGHLY_CONCENTRATED:,}.')
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
 fig.text(0.045, 0.875, subtitle, size=13, color=INK_2, va='top', linespacing=1.4)
 fig.text(0.045, 0.03, 'Source: FFIEC HMDA public data, home-purchase applications on site-built homes. '
          'Segment labels are rounded, so a bar may sum to 99-101%.', size=10, color=MUTED, va='bottom')
-ax = fig.add_axes([0.1, 0.11, 0.87, 0.64])
+ax = fig.add_axes([0.1, 0.11, 0.87, 0.605])   # 0.605 tall: room for the legend under a two-line subtitle
 
 # Each state gets a header line, then one bar per year (2023 on top).
 # y counts down from the top so the chart reads in the same order as the code.
@@ -141,7 +161,7 @@ ax.grid(axis='x')
 ax.set_axisbelow(True)    # gridlines behind the bars
 
 fig.legend(handles=[Patch(color=color, label=label) for _, label, color, _ in SEGMENTS],
-           loc='upper left', bbox_to_anchor=(0.04, 0.835), ncol=3)
+           loc='upper left', bbox_to_anchor=(0.04, 0.80), ncol=3)   # below the two-line subtitle
 
 fig.savefig(ROOT / 'charts' / 'q2_competition.png', dpi=200)
 

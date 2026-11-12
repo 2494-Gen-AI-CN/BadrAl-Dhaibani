@@ -31,6 +31,13 @@ df = df[df.loan_type_label != 'USDA']
 va = df[df.loan_type_label == 'VA'].set_index('state')
 va_ratio = va.apps['NC'] / va.apps['OH']                                # NC's VA applications / Ohio's
 va_gap = va.denial_rate_pct['OH'] - va.denial_rate_pct['NC']            # points lower in NC
+conv = df[df.loan_type_label == 'Conventional'].set_index('state')
+
+# The text says: Ohio denies conventional less often; NC has about twice Ohio's VA
+# applications and fewer VA denials; DTI leads every product. Stop if the data disagrees.
+assert conv.denial_rate_pct['OH'] < conv.denial_rate_pct['NC']
+assert round(va_ratio) == 2 and va_gap > 0
+assert (df.top_denial_reason == 'Debt-to-income ratio').all()
 
 
 # ---- styling ------------------------------------------------------------------
@@ -39,10 +46,8 @@ va_gap = va.denial_rate_pct['OH'] - va.denial_rate_pct['NC']            # points
 SURFACE, INK, INK_2, MUTED = '#fcfcfb', '#0b0b0b', '#52514e', '#898781'
 GRID, AXIS = '#e1e0d9', '#c3c2b7'
 # One colour per state (checked for colour-blind contrast). Ohio keeps the deck's blue.
-# The pale version of each colour is for the context rows, so the eye goes to VA first.
-STATES = [('OH', 'Ohio', '#1e5aa8', '#c8d9ef'), ('NC', 'North Carolina', '#eb6834', '#f7cdb9')]
+STATES = [('OH', 'Ohio', '#1e5aa8'), ('NC', 'North Carolina', '#eb6834')]
 PRODUCTS = ['Conventional', 'FHA', 'VA']    # top to bottom
-HIGHLIGHT = 'VA'
 
 plt.rcParams.update({
     # Liberation Sans has Arial's letter widths, so the layout holds where Arial is missing (Linux).
@@ -73,11 +78,12 @@ GAP = 0.2     # Ohio sits GAP above the product's centre line, North Carolina GA
 
 # ---- chart --------------------------------------------------------------------
 
-# Hand-written takeaway for the Ohio vs North Carolina decision. Numbers checked against
-# charts/data/q3_approval.csv; re-check them if the data changes.
-title = 'VA lending is twice as large in North Carolina, with fewer denials'
-subtitle = ('Conventional and FHA denial rates are close in both states; '
-            'debt-to-income is the leading denial reason for every product.')
+# Takeaway for the Ohio vs North Carolina decision; the numbers and the asserts above
+# come from charts/data/q3_approval.csv.
+title = (f"Conventional is {conv.product_share_pct['OH']:.0f}% of Ohio's demand, "
+         f"and Ohio denies it less often")
+subtitle = ("VA is North Carolina's one edge: twice Ohio's applications and fewer denials.\n"
+            "Debt-to-income is the leading denial reason for every product.")
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
@@ -95,22 +101,20 @@ panels = [
 y_centre = {product: -i for i, product in enumerate(PRODUCTS)}    # 0, -1, -2: Conventional on top
 
 for i, (column, heading, xmax, callout) in enumerate(panels):
-    ax = fig.add_axes([0.14 + i * 0.44, 0.11, 0.38, 0.6])
+    ax = fig.add_axes([0.14 + i * 0.44, 0.11, 0.38, 0.58])   # 0.58 tall: room for the legend under a two-line subtitle
 
-    for (state, _, color, pale), offset in zip(STATES, [GAP, -GAP]):
+    for (state, _, color), offset in zip(STATES, [GAP, -GAP]):
         rows = df[df.state == state]
         for row in rows.itertuples():
             y = y_centre[row.loan_type_label] + offset
             value = getattr(row, column)
-            is_va = row.loan_type_label == HIGHLIGHT
-            ax.barh(y, value, height=BAR, color=color if is_va else pale)
+            ax.barh(y, value, height=BAR, color=color)
             # Value just past the bar end; the offset is in points so the gap
             # looks the same on both panels' scales.
             ax.annotate(f'{value:.1f}%', xy=(value, y), xytext=(5, 0), textcoords='offset points',
-                        va='center', size=12, color=INK if is_va else MUTED,
-                        weight='bold' if is_va else 'normal')
+                        va='center', size=12, color=INK, weight='bold')
             # Callout after North Carolina's VA value: the headline difference.
-            if is_va and state == 'NC':
+            if row.loan_type_label == 'VA' and state == 'NC':
                 ax.annotate(f'← {callout}', xy=(value, y), xytext=(58, 0), textcoords='offset points',
                             va='center', size=12, color=INK)
 
@@ -121,13 +125,10 @@ for i, (column, heading, xmax, callout) in enumerate(panels):
     ax.grid(axis='x')
     ax.set_axisbelow(True)    # gridlines behind the bars
     # Product names only on the left panel; the right panel shares its rows.
-    ax.set_yticks(list(y_centre.values()), list(y_centre) if i == 0 else [])
-    for label in ax.get_yticklabels():
-        label.set_color(INK if label.get_text() == HIGHLIGHT else MUTED)
-        label.set_weight('bold' if label.get_text() == HIGHLIGHT else 'normal')
+    ax.set_yticks(list(y_centre.values()), list(y_centre) if i == 0 else [], weight='bold')
 
-fig.legend(handles=[Patch(color=color, label=name) for _, name, color, _ in STATES],
-           loc='upper left', bbox_to_anchor=(0.04, 0.835), ncol=2)
+fig.legend(handles=[Patch(color=color, label=name) for _, name, color in STATES],
+           loc='upper left', bbox_to_anchor=(0.04, 0.805), ncol=2)   # below the two-line subtitle
 
 fig.savefig(ROOT / 'charts' / 'q3_approval.png', dpi=200)
 

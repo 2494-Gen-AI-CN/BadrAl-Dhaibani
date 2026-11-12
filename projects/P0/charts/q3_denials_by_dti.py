@@ -3,6 +3,7 @@
 Restored from the old charts/make_charts.py (chart 3), which the cleanup in bab5297 removed.
 """
 import logging
+import math
 from pathlib import Path
 from google.cloud import bigquery
 from hmda.config import load_config
@@ -64,22 +65,38 @@ plt.rcParams.update({
 rate = df.pivot(index='dti_band', columns='loan_type_label', values='denial_rate_pct')
 conv_before, conv_after = rate.loc['43%-<50%', 'Conventional'], rate.loc['50%-60%', 'Conventional']
 fha_at = rate.loc['50%-60%', 'FHA']
+over60 = rate.loc['>60%']
 usda = int(df.loc[df.loan_type_label == 'USDA', 'decided'].sum())
 
+# Not on the chart: how many decided FHA applications the "<20%" spike rests on.
+fha_low = df[(df.loan_type_label == 'FHA') & (df.dti_band == '<20%')].iloc[0]
+print(f'FHA <20% DTI: {fha_low.decided:,} decided, {fha_low.denial_rate_pct}% denied, '
+      f'top reason {fha_low.top_denial_reason} ({fha_low.top_reason_share_pct}% of denials)')
+
+# The subtitle says conventional and FHA deny most applications above 60% and VA doesn't.
+assert over60['Conventional'] > 50 and over60['FHA'] > 50 and over60['VA'] < 50
+
+def whole(pct):
+    """Round a percentage half up (40.5 -> 41). Python's :.0f rounds halves to even (40.5 -> 40)."""
+    return math.floor(pct + 0.5)
+
+
 # Title and subtitle are written from the numbers, so they stay true if the data changes.
-title = (f'Conventional denials jump from {conv_before:.0f}% to {conv_after:.0f}% '
+title = (f'Conventional denials jump from {whole(conv_before)}% to {whole(conv_after)}% '
          f'once debt passes 50% of income')
-subtitle = (f'Share of decided applications denied, 2023 to 2025. FHA denials stay at {fha_at:.0f}% '
-            f'up to 60% of income; above 60%, every loan type is mostly\nturned down.')
+subtitle = (f'At 50 to 60% of income, FHA denies {whole(fha_at)}% and conventional {whole(conv_after)}%. '
+            f'Above 60%, conventional and FHA deny most applications; VA denies {whole(over60["VA"])}%.')
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
 fig.text(0.045, 0.875, subtitle, size=13, color=INK_2, va='top', linespacing=1.4)
-fig.text(0.045, 0.03, 'Source: FFIEC HMDA public data, home-purchase applications on site-built homes. '
+fig.text(0.045, 0.03, 'Source: FFIEC HMDA public data, home-purchase applications on site-built homes, '
+         '2023 to 2025, Ohio and North Carolina combined.\n'
          f'Left out: USDA loans ({usda:,} decided; too few at high debt) and applications with '
-         'no ratio reported.', size=10, color=MUTED, va='bottom')
+         'no ratio reported.', size=10, color=MUTED, va='bottom', linespacing=1.4)
 
-ax = fig.add_axes([0.075, 0.11, 0.805, 0.65])
+# Bottom raised from 0.11 so the x-axis label clears the two-line source note.
+ax = fig.add_axes([0.075, 0.15, 0.805, 0.65])
 x = range(len(DTI_ORDER))
 for loan_type, color in LOAN_TYPES:
     y = rate.loc[DTI_ORDER, loan_type]

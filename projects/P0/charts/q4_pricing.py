@@ -1,7 +1,7 @@
 """Q4 Pricing: median rate spread per county, one row per state (a dot strip).
 
 Each dot is a county with 300+ conventional originations on site-built homes in 2025.
-No county labels, to keep it uncluttered: the five recommended Ohio counties are drawn darker.
+No county labels, to keep it uncluttered, and every county is drawn the same way.
 """
 import logging
 from pathlib import Path
@@ -29,16 +29,11 @@ df.to_csv(ROOT / 'charts' / 'data' / 'q4_pricing.csv', index=False)
 
 # ---- styling ------------------------------------------------------------------
 
-# Same palette and look as charts/q3_approval.py: each state's deck colour, and a pale
-# version for every other county, so the eye goes to the five recommended ones.
+# Same palette and look as charts/q3_approval.py: each state's deck colour.
 SURFACE, INK, INK_2, MUTED = '#fcfcfb', '#0b0b0b', '#52514e', '#898781'
 GRID, AXIS = '#e1e0d9', '#c3c2b7'
-STATES = [('Ohio', 'OH', '#1e5aa8', '#c8d9ef', 1),          # name, abbreviation, colour, pale, row
-          ('North Carolina', 'NC', '#eb6834', '#f7cdb9', 0)]
-
-# The five recommended counties, drawn in the full state colour.
-HIGHLIGHT = {('Ohio', f'{name} County') for name in
-             ['Franklin', 'Hamilton', 'Montgomery', 'Butler', 'Warren']}
+STATES = [('Ohio', 'OH', '#1e5aa8', 1),          # name, abbreviation, colour, row
+          ('North Carolina', 'NC', '#eb6834', 0)]
 
 BIN = 0.01      # counties within the same 0.01-point bin stack vertically
 STEP = 0.075    # vertical distance between stacked dots, in rows
@@ -81,8 +76,7 @@ above_nc = (df.loc[df.state == 'Ohio', 'median_rate_spread'] > nc_max).sum()
 title = "Ohio borrowers pay more over the benchmark rate than North Carolina's"
 subtitle = (f'Each dot is one county\'s median rate spread on 2025 conventional loans. '
             f'Ohio\'s median is {median["Ohio"]:.2f} points, North Carolina\'s {median["North Carolina"]:.2f}.\n'
-            f'All {above_nc} counties above North Carolina\'s highest are in Ohio. '
-            f'Dark dots: the five counties we recommend.')
+            f'All {above_nc} counties above North Carolina\'s highest are in Ohio.')
 
 
 # ---- chart --------------------------------------------------------------------
@@ -98,7 +92,7 @@ fig.text(0.045, 0.03, 'Source: FFIEC HMDA public data, conventional loans on sit
 
 ax = fig.add_axes([0.13, 0.17, 0.83, 0.56])
 
-for state, _, color, pale, row in STATES:
+for state, _, color, row in STATES:
     counties = df[df.state == state].sort_values('median_rate_spread')
     # Stack counties that land in the same bin, centred on the row, so no dot hides another.
     counties['bin'] = (counties.median_rate_spread / BIN).round()
@@ -106,10 +100,9 @@ for state, _, color, pale, row in STATES:
     counties['n'] = counties.groupby('bin').bin.transform('size')
     counties['y'] = row + (counties.k - (counties.n - 1) / 2) * STEP
 
-    for c in counties.itertuples():
-        dark = (state, c.county_name) in HIGHLIGHT
-        ax.scatter(c.median_rate_spread, c.y, s=90 if dark else 70, zorder=3,
-                   color=color if dark else pale, edgecolor=SURFACE, linewidth=1)
+    # Every county the same: solid state colour, one size. The thin edge keeps stacked dots apart.
+    ax.scatter(counties.median_rate_spread, counties.y, s=70, zorder=3,
+               color=color, edgecolor=SURFACE, linewidth=1)
 
     # The state's median over all its loans: a short dark bar across the row, labelled
     # on the side facing the gap between the rows.

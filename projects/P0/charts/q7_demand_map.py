@@ -46,8 +46,12 @@ BIN_LABELS = ['Under 500', '500–1k', '1k–2.5k', '2.5k–5k', '5k+']
 # Each state keeps its deck colour: a light-to-dark ramp through it, one step per class.
 STATES = [('39', 'Ohio', '#1e5aa8'), ('37', 'North Carolina', '#eb6834')]
 N_LABELS = 5   # name each state's five largest counties on the map
-# Also name these: counties in the recommended five-county start that aren't in the top five.
-EXTRA_LABELS = {'Ohio': ['Butler', 'Warren']}
+# The recommended five-county start: bold label and a dark outline. Keyed by state,
+# because North Carolina has a Franklin County too.
+RECOMMENDED = {'Ohio': ['Franklin', 'Hamilton', 'Montgomery', 'Butler', 'Warren']}
+OUTLINE = 1.6   # line width of the recommended counties' outline
+# Also name these, even if they aren't in the top five.
+EXTRA_LABELS = RECOMMENDED
 # Move a label by (x, y) points, with a thin leader line back to its county, when it would
 # collide with a neighbour or sit on a dark fill (text on the darkest class is hard to read).
 # Others are labelled in place.
@@ -87,11 +91,30 @@ print('counties with no data:', counties[VALUE].isna().sum(),
 counties[VALUE] = counties[VALUE].fillna(0)
 counties['bin'] = pd.cut(counties[VALUE], BINS, right=False, labels=False)
 
-# Hand-written takeaway. Numbers checked against charts/data/q7_demand_map.csv;
-# re-check them if the data changes.
-title = 'In both states, about a third of buyers are in five metro counties'
-subtitle = ("Ohio's five largest counties drew 38% of its 2025 applications, spread across five cities.\n"
-            "North Carolina's drew 34%, led by Wake (Raleigh) and Mecklenburg (Charlotte).")
+# ---- numbers for the text -----------------------------------------------------
+# From the query result itself, so they match charts/data/q7_demand_map.csv.
+oh = df[df.state_name == 'Ohio']
+nc = df[df.state_name == 'North Carolina']
+picked_rows = oh[oh.county_name.isin([f'{n} County' for n in RECOMMENDED['Ohio']])]
+assert len(picked_rows) == 5          # all five found in the data
+picked = picked_rows.apps_2025.sum()
+oh_total = oh.apps_2025.sum()
+
+
+def top5_share(state_rows):
+    """Share of a state's 2025 applications in its five largest counties, in %."""
+    return state_rows.nlargest(5, 'apps_2025').apps_2025.sum() / state_rows.apps_2025.sum() * 100
+
+
+# The five sit in three federal metro areas (msa_md in dim_geography, same in 2023-2025):
+# Franklin in Columbus (18140), Montgomery in Dayton-Kettering (19430), and Hamilton, Butler
+# and Warren in Cincinnati (17140). Franklin doesn't border the other four, so don't call them
+# neighbouring or a corridor.
+# Chart text names counties, not cities: the audience is Canadian and the data is by county.
+title = f"The five counties we recommend hold {picked / oh_total * 100:.0f}% of Ohio's buyers"
+subtitle = (f"The five we recommend drew {picked:,} of Ohio's {oh_total:,} applications in 2025.\n"
+            f"Ohio's five largest counties hold {top5_share(oh):.0f}% of its applications, "
+            f"North Carolina's {top5_share(nc):.0f}%.")
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
@@ -122,6 +145,9 @@ for group, (fips, state, base), b, w, h in zip(groups, STATES, bounds, widths, h
     group.plot(ax=ax, color=[colors[i] for i in group['bin']],
                edgecolor=SURFACE, linewidth=0.6)
     group.dissolve().boundary.plot(ax=ax, color=AXIS, linewidth=0.8)   # state outline
+    recommended = RECOMMENDED.get(state, [])
+    if recommended:   # only Ohio has any
+        group[group.NAME.isin(recommended)].boundary.plot(ax=ax, color=INK, linewidth=OUTLINE)
     ax.set_xlim(b[0], b[2])
     ax.set_ylim(b[1], b[3])
     ax.set_axis_off()
@@ -137,6 +163,7 @@ for group, (fips, state, base), b, w, h in zip(groups, STATES, bounds, widths, h
         ax.annotate(f"{row.NAME}\n{row[VALUE]:,.0f}", (point.x, point.y),
                     xytext=(dx, dy), textcoords='offset points', ha='center', va='center',
                     size=10, color=INK, linespacing=1.1, annotation_clip=False,
+                    weight='bold' if row.NAME in recommended else 'normal',
                     path_effects=[pe.withStroke(linewidth=4, foreground=SURFACE)],
                     arrowprops=dict(arrowstyle='-', color=INK_2, linewidth=0.8, shrinkA=8, shrinkB=0)
                     if (dx, dy) != (0, 0) else None)
@@ -153,6 +180,12 @@ for row, (state, colors) in enumerate(legend_colors):
     fig.legend(handles=[Patch(color=c, label=l) for c, l in zip(colors, BIN_LABELS)],
                loc='center left', bbox_to_anchor=(legend_x + 0.1, y), ncol=5,
                handlelength=1.2, columnspacing=1.0, labelcolor=INK_2, borderpad=0, borderaxespad=0)
+
+# Key for the dark outline, one row below the swatches.
+fig.legend(handles=[Patch(facecolor='none', edgecolor=INK, linewidth=OUTLINE,
+                          label='Bold outline: the five counties we recommend')],
+           loc='center left', bbox_to_anchor=(legend_x, LEGEND_TOP - 0.04 - 2 * 0.05),
+           handlelength=1.2, labelcolor=INK_2, borderpad=0, borderaxespad=0)
 
 fig.savefig(ROOT / 'charts' / 'q7_demand_map.png', dpi=200)
 

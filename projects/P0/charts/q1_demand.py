@@ -65,11 +65,23 @@ df.to_csv(ROOT / 'charts' / 'data' / 'q1_demand.csv', index=False)
 
 top = df[df.rank_in_state <= 10]
 
-# Hand-written takeaway for the Ohio vs North Carolina decision. Numbers checked against
-# charts/data/q1_demand.csv; re-check them if the data changes.
-title = "Ohio's largest counties are growing; North Carolina's two biggest are shrinking"
-subtitle = ("Combined, Ohio's ten largest counties grew 3.0% from 2023 to 2025, and 7 of the 10 grew.\n"
-            "North Carolina's ten fell 3.8%, led by Wake (−12.1%) and Mecklenburg (−6.8%).")
+# ---- numbers for the text -----------------------------------------------------
+# Combined growth of each state's ten largest counties, 2023 to 2025 (total vs total,
+# not an average of the county growth rates).
+totals = top.groupby('state_name')[['apps_2023', 'apps_2025']].sum()
+growth = (totals.apps_2025 / totals.apps_2023 - 1) * 100
+oh_grew = (top[top.state_name == 'Ohio'].growth_pct > 0).sum()      # how many of Ohio's 10 grew
+nc_big = top[top.state_name == 'North Carolina'].nsmallest(2, 'rank_in_state')   # NC's two largest
+(big1, pct1), (big2, pct2) = zip(nc_big.county_name.str.removesuffix(' County'), nc_big.growth_pct)
+
+# The wording says Ohio grew and North Carolina fell, led by its two biggest; stop if the data disagrees.
+assert growth['Ohio'] > 0 > growth['North Carolina'] and pct1 < 0 and pct2 < 0
+
+# Takeaway for the Ohio vs North Carolina decision; every number comes from the data above.
+title = (f"Ohio's ten largest counties grew {growth['Ohio']:.1f}% since 2023; "
+         f"North Carolina's fell {-growth['North Carolina']:.1f}%")
+subtitle = (f"{oh_grew} of Ohio's 10 grew. North Carolina's two biggest, {big1} ({signed(pct1)}%) and "
+            f"{big2} ({signed(pct2)}%), led the decline.")
 
 fig = plt.figure(figsize=(13.33, 7.5))
 fig.text(0.045, 0.945, title, size=21, weight='bold', color=INK, va='top')
